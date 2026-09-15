@@ -82,7 +82,7 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
     return (
       <div className="flex flex-col gap-4">
         <BackButton onBack={onBack} />
-        <p className="text-sm text-slate-500">No se encontró la propiedad.</p>
+        <p className="text-sm text-faint">No se encontró la propiedad.</p>
       </div>
     )
   }
@@ -150,8 +150,8 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
         <div className="flex items-start gap-3">
           <BackButton onBack={onBack} />
           <div>
-            <h2 className="text-xl font-semibold text-slate-100">{property.name}</h2>
-            <p className="text-sm text-slate-400">{property.address}</p>
+            <h2 className="text-xl font-semibold text-ink">{property.name}</h2>
+            <p className="text-sm text-muted">{property.address}</p>
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
             type="button"
             onClick={() => setIsEditingProperty(true)}
             aria-label="Editar propiedad"
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+            className="rounded-lg p-2 text-faint transition-colors hover:bg-line hover:text-ink-soft"
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -168,7 +168,7 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
             type="button"
             onClick={handleDeleteProperty}
             aria-label="Eliminar propiedad"
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+            className="rounded-lg p-2 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -198,11 +198,11 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
             {propertyServices.map((service) => (
               <li
                 key={service.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-lg border border-line bg-app px-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-100">{service.serviceName}</p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-sm font-medium text-ink">{service.serviceName}</p>
+                  <p className="truncate text-xs text-faint">
                     Nro. de cuenta: {service.accountNumber}
                     {service.isAutoDebit && ' · Débito automático'}
                   </p>
@@ -220,7 +220,7 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
       {/* Checklist Mensual (dinámico, cruza servicios configurados vs. el mes elegido) */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="text-sm font-medium text-slate-400">Checklist Mensual</h3>
+          <h3 className="text-sm font-medium text-muted">Checklist Mensual</h3>
           <MonthYearSelector mes={month} anio={year} years={years} onMesChange={setMonth} onAnioChange={setYear} />
         </div>
 
@@ -272,7 +272,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
       type="button"
       onClick={onBack}
       aria-label="Volver"
-      className="rounded-lg border border-slate-800 p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
+      className="rounded-lg border border-line p-2 text-muted transition-colors hover:bg-line hover:text-ink"
     >
       <ArrowLeft className="h-4 w-4" />
     </button>
@@ -280,7 +280,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
 }
 
 function EmptyText({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-slate-500">{children}</p>
+  return <p className="text-sm text-faint">{children}</p>
 }
 
 interface SectionProps {
@@ -292,13 +292,13 @@ interface SectionProps {
 
 function Section({ title, actionLabel, onAction, children }: SectionProps) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-400">{title}</h3>
+        <h3 className="text-sm font-medium text-muted">{title}</h3>
         <button
           type="button"
           onClick={onAction}
-          className="flex items-center gap-1 rounded-lg border border-slate-700 px-2 py-1 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-800"
+          className="flex items-center gap-1 rounded-lg border border-line-strong px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-line"
         >
           <Plus className="h-3.5 w-3.5" />
           {actionLabel}
@@ -316,7 +316,7 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
         type="button"
         onClick={onEdit}
         aria-label="Editar"
-        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-line hover:text-ink-soft"
       >
         <Pencil className="h-4 w-4" />
       </button>
@@ -324,7 +324,7 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
         type="button"
         onClick={onDelete}
         aria-label="Eliminar"
-        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
       >
         <Trash2 className="h-4 w-4" />
       </button>

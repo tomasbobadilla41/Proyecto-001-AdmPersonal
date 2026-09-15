@@ -36,27 +36,27 @@ export function RealEstateDashboardView() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">Propiedades</h2>
-        <p className="text-sm text-slate-400">Alquileres, servicios y gastos — mes actual</p>
+        <h2 className="text-xl font-semibold text-ink">Propiedades</h2>
+        <p className="text-sm text-muted">Alquileres, servicios y gastos — mes actual</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard title="Ingresos Totales por Alquileres" icon={Wallet} iconClassName="text-emerald-400">
-          <span className="text-2xl font-semibold text-slate-100">
+          <span className="text-2xl font-semibold text-ink">
             {formatMoney({ amount: totalIngresos, currency: 'ARS' })}
           </span>
-          <p className="text-xs text-slate-500">Todas las propiedades, mes actual</p>
+          <p className="text-xs text-faint">Todas las propiedades, mes actual</p>
         </StatCard>
         <StatCard title="Gastos Totales de Propiedades" icon={Receipt} iconClassName="text-rose-400">
-          <span className="text-2xl font-semibold text-slate-100">
+          <span className="text-2xl font-semibold text-ink">
             {formatMoney({ amount: totalGastos, currency: 'ARS' })}
           </span>
-          <p className="text-xs text-slate-500">Todas las propiedades, mes actual</p>
+          <p className="text-xs text-faint">Todas las propiedades, mes actual</p>
         </StatCard>
       </div>
 
       {properties.length === 0 ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
           Todavía no agregaste ninguna propiedad.
         </div>
       ) : (

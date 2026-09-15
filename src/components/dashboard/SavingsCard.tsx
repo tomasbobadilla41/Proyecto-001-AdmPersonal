@@ -21,7 +21,7 @@ export function SavingsCard({ remanente, metaIdeal }: SavingsCardProps) {
       <span className={`text-2xl font-semibold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
         {formatMoney({ amount: remanente, currency: 'ARS' })}
       </span>
-      <p className="text-xs text-slate-500">Meta ideal (20%): {formatMoney({ amount: metaIdeal, currency: 'ARS' })}</p>
+      <p className="text-xs text-faint">Meta ideal (20%): {formatMoney({ amount: metaIdeal, currency: 'ARS' })}</p>
     </StatCard>
   )
 }

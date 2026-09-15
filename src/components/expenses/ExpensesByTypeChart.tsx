@@ -1,6 +1,8 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import type { Expense, ExpenseType } from '../../types/finance'
 import { toARS } from '../../utils/finance'
+import { useTheme } from '../../hooks/useTheme'
+import { CHART_PALETTES } from '../../utils/chartTheme'
 
 interface ExpensesByTypeChartProps {
   expenses: Expense[]
@@ -12,13 +14,17 @@ const TYPE_LABELS: Record<ExpenseType, string> = {
   FLEXIBLE: 'Gastos Flexibles',
 }
 
-// Mismos colores que el badge de Tipo en la tabla: azul para Fijo, naranja para Flexible.
+// Mismos colores que el badge de Tipo en la tabla: azul para Fijo, naranja
+// para Flexible. Semánticos a propósito: no cambian con el tema.
 const TYPE_COLORS: Record<ExpenseType, string> = {
   FIJO: '#60a5fa',
   FLEXIBLE: '#fb923c',
 }
 
 export function ExpensesByTypeChart({ expenses, tipoCambio }: ExpensesByTypeChartProps) {
+  const { theme } = useTheme()
+  const palette = CHART_PALETTES[theme]
+
   const totalsByType = new Map<ExpenseType, number>()
   for (const expense of expenses) {
     const montoARS = toARS(expense.monto, expense.moneda, tipoCambio)
@@ -30,10 +36,10 @@ export function ExpensesByTypeChart({ expenses, tipoCambio }: ExpensesByTypeChar
     .filter((entry) => entry.total > 0)
 
   return (
-    <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <h3 className="mb-4 text-sm font-medium text-slate-400">Gastos Fijos vs Flexibles</h3>
+    <div className="flex flex-col rounded-2xl border border-line bg-panel p-5">
+      <h3 className="mb-4 text-sm font-medium text-muted">Gastos Fijos vs Flexibles</h3>
       {data.length === 0 ? (
-        <div className="flex h-72 items-center justify-center text-sm text-slate-500">
+        <div className="flex h-72 items-center justify-center text-sm text-faint">
           Sin gastos cargados para este período.
         </div>
       ) : (
@@ -46,12 +52,12 @@ export function ExpensesByTypeChart({ expenses, tipoCambio }: ExpensesByTypeChar
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: 8 }}
-                labelStyle={{ color: '#e2e8f0' }}
-                itemStyle={{ color: '#e2e8f0' }}
+                contentStyle={{ backgroundColor: palette.tooltipBg, border: `1px solid ${palette.tooltipBorder}`, borderRadius: 8 }}
+                labelStyle={{ color: palette.tooltipText }}
+                itemStyle={{ color: palette.tooltipText }}
                 formatter={(value) => `$${Number(value).toLocaleString('es-AR')}`}
               />
-              <Legend verticalAlign="bottom" height={48} wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+              <Legend verticalAlign="bottom" height={48} wrapperStyle={{ color: palette.axis, fontSize: 12 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>

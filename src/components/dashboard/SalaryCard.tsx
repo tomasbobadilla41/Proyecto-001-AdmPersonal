@@ -6,7 +6,7 @@ import { toARS } from '../../utils/finance'
 import { StatCard } from '../common/StatCard'
 
 const INPUT_CLASSNAME =
-  'rounded-lg border border-slate-800 bg-slate-950 px-2 py-1.5 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none'
+  'rounded-lg border border-line bg-app px-2 py-1.5 text-sm text-ink focus:border-accent focus:outline-none'
 
 interface SalaryCardProps {
   mes: number
@@ -42,7 +42,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
     return (
       <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
         <div className="flex flex-col gap-2">
-          <label className="flex flex-col gap-1 text-xs text-slate-400">
+          <label className="flex flex-col gap-1 text-xs text-muted">
             Sueldo ARS
             <input
               type="number"
@@ -54,7 +54,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
               className={INPUT_CLASSNAME}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-slate-400">
+          <label className="flex flex-col gap-1 text-xs text-muted">
             Sueldo USD
             <input
               type="number"
@@ -69,14 +69,14 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
             <button
               type="button"
               onClick={handleSave}
-              className="flex-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+              className="flex-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
             >
               Guardar
             </button>
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="rounded-lg border border-slate-800 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-slate-800"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs text-muted transition-colors hover:bg-line"
             >
               Cancelar
             </button>
@@ -89,11 +89,11 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
   if (!income) {
     return (
       <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
-        <p className="text-sm text-slate-500">Todavía no cargaste el sueldo de este mes.</p>
+        <p className="text-sm text-faint">Todavía no cargaste el sueldo de este mes.</p>
         <button
           type="button"
           onClick={startEditing}
-          className="self-start rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+          className="self-start rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
         >
           Cargar sueldo
         </button>
@@ -107,19 +107,19 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
   return (
     <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-2xl font-semibold text-slate-100">
+        <span className="text-2xl font-semibold text-ink">
           {formatMoney({ amount: totalARS, currency: 'ARS' })}
         </span>
         <button
           type="button"
           onClick={startEditing}
           aria-label="Editar sueldo"
-          className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+          className="rounded-lg p-1.5 text-faint transition-colors hover:bg-line hover:text-ink-soft"
         >
           <Pencil className="h-4 w-4" />
         </button>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-faint">
         ≈ {formatUsdEquivalent(totalEnUSD)} (a TC {tipoCambio})
       </p>
     </StatCard>

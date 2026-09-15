@@ -147,3 +147,23 @@ export function todayISODate(): string {
   const day = String(now.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+/**
+ * Suma `months` meses a una fecha en UTC, cambiando de año si corresponde
+ * (API nativa de `Date`, sin `date-fns`: `Date.UTC` normaliza un mes fuera
+ * de [0,11] corriendo el año solo). Si el día no existe en el mes de
+ * destino (ej: 31 de enero + 1 mes → febrero no tiene 31), cae al último
+ * día real de ese mes, igual que `date-fns`.
+ */
+export function addMonthsUTC(date: Date, months: number): Date {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth()
+  const day = date.getUTCDate()
+
+  const targetMonthStart = new Date(Date.UTC(year, month + months, 1))
+  const lastDayOfTargetMonth = new Date(Date.UTC(year, month + months + 1, 0)).getUTCDate()
+
+  return new Date(
+    Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth(), Math.min(day, lastDayOfTargetMonth)),
+  )
+}

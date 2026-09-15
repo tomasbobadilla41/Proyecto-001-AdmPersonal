@@ -53,10 +53,10 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-100">
+          <h2 className="text-xl font-semibold text-ink">
             Resumen de {MESES_LARGOS[current.mes - 1]} {current.anio}
           </h2>
-          <p className="text-sm text-slate-400">Métricas del mes actual — regla 50/30/20</p>
+          <p className="text-sm text-muted">Métricas del mes actual — regla 50/30/20</p>
         </div>
         <ExchangeRateInput
           mes={current.mes}

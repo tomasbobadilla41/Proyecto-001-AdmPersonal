@@ -14,7 +14,7 @@ import { formatDateAR, getAvailableYears, getExchangeRate, getMostRecentExpenseP
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 
 export function ExpensesPage() {
-  const { expenses, exchangeRates, addExpense, updateExpense, removeExpense } = useFinanceStore()
+  const { expenses, exchangeRates, addExpenses, updateExpense, removeExpense } = useFinanceStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
 
   const [mes, setMes] = useState(
@@ -41,11 +41,11 @@ export function ExpensesPage() {
     }
   }
 
-  function handleSubmit(expense: Expense) {
+  function handleSubmit(expenses: Expense[]) {
     if (formState?.mode === 'edit') {
-      updateExpense(expense)
+      updateExpense(expenses[0])
     } else {
-      addExpense(expense)
+      addExpenses(expenses)
     }
     setFormState(null)
   }
@@ -54,16 +54,16 @@ export function ExpensesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-100">Gastos</h2>
-          <p className="text-sm text-slate-400">Detalle de gastos por mes, como en la planilla</p>
+          <h2 className="text-xl font-semibold text-ink">Gastos</h2>
+          <p className="text-sm text-muted">Detalle de gastos por mes, como en la planilla</p>
         </div>
         <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900 lg:col-span-2">
+        <div className="overflow-x-auto rounded-2xl border border-line bg-panel lg:col-span-2">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-900/70 text-slate-400">
+            <thead className="bg-panel/70 text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Fecha</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
@@ -73,10 +73,10 @@ export function ExpensesPage() {
                 <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-line">
               {filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="text-slate-200">
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-400">
+                <tr key={expense.id} className="text-ink-soft">
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">
                     {formatDateAR(expense.fecha)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
@@ -86,7 +86,7 @@ export function ExpensesPage() {
                     <div className="flex items-center gap-1.5">
                       <CategoryBadge category={expense.category} />
                       {expense.subcategoria && (
-                        <span className="text-xs text-slate-500">{expense.subcategoria}</span>
+                        <span className="text-xs text-faint">{expense.subcategoria}</span>
                       )}
                     </div>
                   </td>
@@ -100,7 +100,7 @@ export function ExpensesPage() {
                         type="button"
                         onClick={() => setFormState({ mode: 'edit', expense })}
                         aria-label="Editar gasto"
-                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-line hover:text-ink-soft"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -108,7 +108,7 @@ export function ExpensesPage() {
                         type="button"
                         onClick={() => handleDelete(expense)}
                         aria-label="Eliminar gasto"
-                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -118,7 +118,7 @@ export function ExpensesPage() {
               ))}
               {filteredExpenses.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-faint">
                     No hay gastos cargados para este período.
                   </td>
                 </tr>

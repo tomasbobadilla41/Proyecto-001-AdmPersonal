@@ -10,7 +10,7 @@ interface StreamingServiceFieldProps {
 const NEW_SERVICE_VALUE = '__new__'
 
 const FIELD_CLASSNAME =
-  'w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none'
+  'w-full rounded-lg border border-line bg-app px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none'
 
 /** Selector de "qué servicio" dentro de una categoría (ej: Streaming → Netflix), con opción de agregar uno nuevo. */
 export function StreamingServiceField({ value, onChange, services, onAddService }: StreamingServiceFieldProps) {
@@ -59,14 +59,14 @@ export function StreamingServiceField({ value, onChange, services, onAddService 
         <button
           type="button"
           onClick={confirmNewService}
-          className="shrink-0 rounded-lg bg-emerald-500 px-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+          className="shrink-0 rounded-lg bg-accent px-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
         >
           Agregar
         </button>
         <button
           type="button"
           onClick={() => setIsAdding(false)}
-          className="shrink-0 rounded-lg border border-slate-800 px-3 text-sm text-slate-400 transition-colors hover:bg-slate-800"
+          className="shrink-0 rounded-lg border border-line px-3 text-sm text-muted transition-colors hover:bg-line"
         >
           Cancelar
         </button>

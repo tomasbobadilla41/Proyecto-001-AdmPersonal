@@ -14,7 +14,7 @@ interface ServiceChecklistRowProps {
 }
 
 const AMOUNT_INPUT_CLASSNAME =
-  'w-28 rounded-lg border border-slate-800 bg-slate-950 px-2 py-1 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none'
+  'w-28 rounded-lg border border-line bg-app px-2 py-1 text-sm text-ink focus:border-accent focus:outline-none'
 
 export function ServiceChecklistRow({ service, expense, propertyId, month, year, onSave }: ServiceChecklistRowProps) {
   const isPaid = expense?.status === 'PAID'
@@ -46,9 +46,9 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
   }
 
   return (
-    <tr className="text-slate-200">
+    <tr className="text-ink-soft">
       <td className="whitespace-nowrap px-4 py-3 font-medium">{service.serviceName}</td>
-      <td className="whitespace-nowrap px-4 py-3 text-slate-400">{service.accountNumber}</td>
+      <td className="whitespace-nowrap px-4 py-3 text-muted">{service.accountNumber}</td>
       <td className="whitespace-nowrap px-4 py-3">
         {service.isAutoDebit ? (
           <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
             className={AMOUNT_INPUT_CLASSNAME}
           />
         ) : (
-          <span className="text-sm font-medium text-slate-100">
+          <span className="text-sm font-medium text-ink">
             {formatMoney({ amount: Number(amount) || 0, currency: 'ARS' })}
           </span>
         )}
@@ -95,7 +95,7 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
           <button
             type="button"
             onClick={() => persist('PAID')}
-            className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+            className="rounded-lg bg-accent px-3 py-1 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
           >
             Marcar como Pagado
           </button>
@@ -109,7 +109,7 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
               type="button"
               onClick={() => setIsEditing(true)}
               aria-label="Editar monto"
-              className="rounded-lg p-1 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+              className="rounded-lg p-1 text-faint transition-colors hover:bg-line hover:text-ink-soft"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>

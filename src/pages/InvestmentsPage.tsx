@@ -38,15 +38,15 @@ export function InvestmentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">Inversiones</h2>
-        <p className="text-sm text-slate-400">Portfolio de posiciones abiertas</p>
+        <h2 className="text-xl font-semibold text-ink">Inversiones</h2>
+        <p className="text-sm text-muted">Portfolio de posiciones abiertas</p>
       </div>
 
       <PortfolioSummaryCard positions={investments} tipoCambio={tipoCambio} />
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-900/70 text-slate-400">
+          <thead className="bg-panel/70 text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Ticker</th>
               <th className="px-4 py-3 font-medium">Tipo</th>
@@ -58,22 +58,22 @@ export function InvestmentsPage() {
               <th className="px-4 py-3 text-right font-medium">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-line">
             {investments.map((position) => {
               const { monto, porcentaje } = getPositionResult(position)
               const isPositive = monto >= 0
               const colorClass = isPositive ? 'text-emerald-400' : 'text-rose-400'
 
               return (
-                <tr key={position.id} className="text-slate-200">
+                <tr key={position.id} className="text-ink-soft">
                   <td className="whitespace-nowrap px-4 py-3 font-medium">{position.ticker}</td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
+                    <span className="rounded-full bg-line px-2 py-0.5 text-xs text-ink-soft">
                       {position.tipo}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">{position.cantidad}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-400">{position.moneda}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">{position.moneda}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     {formatMoney({ amount: position.precioCompraPromedio, currency: position.moneda })}
                   </td>
@@ -92,7 +92,7 @@ export function InvestmentsPage() {
                         type="button"
                         onClick={() => setFormState({ mode: 'edit', position })}
                         aria-label="Editar posición"
-                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-line hover:text-ink-soft"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -100,7 +100,7 @@ export function InvestmentsPage() {
                         type="button"
                         onClick={() => handleDelete(position)}
                         aria-label="Eliminar posición"
-                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -111,7 +111,7 @@ export function InvestmentsPage() {
             })}
             {investments.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-faint">
                   Todavía no cargaste ninguna posición.
                 </td>
               </tr>

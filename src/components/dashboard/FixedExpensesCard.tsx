@@ -14,10 +14,10 @@ export function FixedExpensesCard({ total, limiteIdeal }: FixedExpensesCardProps
 
   return (
     <StatCard title="Gastos Fijos (50%)" icon={Home} iconClassName="text-blue-400">
-      <span className="text-2xl font-semibold text-slate-100">
+      <span className="text-2xl font-semibold text-ink">
         {formatMoney({ amount: total, currency: 'ARS' })}
       </span>
-      <p className={`text-xs ${isOverLimit ? 'text-rose-400' : 'text-slate-500'}`}>
+      <p className={`text-xs ${isOverLimit ? 'text-rose-400' : 'text-faint'}`}>
         Límite ideal (50%): {formatMoney({ amount: limiteIdeal, currency: 'ARS' })}
       </p>
     </StatCard>

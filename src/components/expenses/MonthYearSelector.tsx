@@ -9,7 +9,7 @@ interface MonthYearSelectorProps {
 }
 
 const SELECT_CLASSNAME =
-  'rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:border-emerald-500 focus:outline-none'
+  'rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink-soft focus:border-accent focus:outline-none'
 
 export function MonthYearSelector({ mes, anio, years, onMesChange, onAnioChange }: MonthYearSelectorProps) {
   return (

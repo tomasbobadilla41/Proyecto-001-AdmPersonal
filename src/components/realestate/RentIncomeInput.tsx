@@ -12,7 +12,7 @@ interface RentIncomeInputProps {
 }
 
 const INPUT_CLASSNAME =
-  'w-32 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none'
+  'w-32 rounded-lg border border-line bg-app px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none'
 
 export function RentIncomeInput({ propertyId, month, year, existingIncome, onSave }: RentIncomeInputProps) {
   const [amount, setAmount] = useState('')
@@ -37,8 +37,8 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, onSav
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <label className="flex flex-col gap-1 text-sm text-slate-300">
+    <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-panel p-5">
+      <label className="flex flex-col gap-1 text-sm text-ink-soft">
         Alquiler Cobrado
         <div className="flex gap-2">
           <input
@@ -54,7 +54,7 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, onSav
             aria-label="Moneda"
             value={currency}
             onChange={(e) => setCurrency(e.target.value as Currency)}
-            className="rounded-lg border border-slate-800 bg-slate-950 px-2 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+            className="rounded-lg border border-line bg-app px-2 py-2 text-sm text-ink focus:border-accent focus:outline-none"
           >
             <option value="ARS">ARS</option>
             <option value="USD">USD</option>
@@ -64,12 +64,12 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, onSav
       <button
         type="button"
         onClick={handleSave}
-        className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
       >
         Guardar
       </button>
       {existingIncome && (
-        <span className="pb-2 text-xs text-slate-500">Ya cargado este mes — se actualiza al guardar de nuevo.</span>
+        <span className="pb-2 text-xs text-faint">Ya cargado este mes — se actualiza al guardar de nuevo.</span>
       )}
     </div>
   )

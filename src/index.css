@@ -1,11 +1,72 @@
 @import "tailwindcss";
 
+/*
+ * Tokens de tema. Declararlos como colores de Tailwind bajo `@theme` (en vez
+ * de un `@utility` suelto) es lo que le da a cada uno sus utilidades
+ * completas gratis — bg-app, text-ink, border-line/50, etc., con soporte de
+ * modificador de opacidad incluido.
+ *
+ * El truco para que cambien en caliente: estos valores son la variable CSS
+ * por defecto (tema 'dark'); los overrides de `[data-theme="light"]` y
+ * `[data-theme="rose"]` de más abajo pisan la misma variable con más
+ * especificidad, así que ninguna clase se regenera — la cascada de CSS hace
+ * todo el trabajo.
+ */
+@theme {
+  --color-app: #020617; /* fondo de la página y de los inputs "hundidos" */
+  --color-panel: #0f172a; /* tarjetas, drawers, headers de tabla */
+  --color-line: #1e293b; /* bordes, separadores, hover sutil */
+  --color-line-strong: #334155; /* borde de botones "outline" */
+  --color-ink: #f1f5f9; /* texto principal */
+  --color-ink-soft: #cbd5e1; /* labels, texto secundario legible */
+  --color-muted: #94a3b8; /* texto apagado */
+  --color-faint: #64748b; /* texto todavía más apagado (captions) */
+  --color-accent: #10b981; /* botones primarios, foco, nav activo */
+  --color-accent-strong: #34d399; /* hover del accent */
+  --color-on-accent: #020617; /* texto sobre un fondo accent */
+}
+
+/* Los montos/estados financieros (ingreso, gasto, alerta) usan colores fijos
+   a propósito — no dependen del tema, para que "verde = positivo" y
+   "rojo = negativo" se entiendan igual en las tres pieles. Solo el "chrome"
+   (fondos, bordes, texto neutro, accent) cambia con el tema. */
+
 :root {
   color-scheme: dark;
 }
 
+[data-theme='light'] {
+  color-scheme: light;
+  --color-app: #f8fafc;
+  --color-panel: #ffffff;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-ink: #0f172a;
+  --color-ink-soft: #334155;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+  --color-accent: #059669;
+  --color-accent-strong: #10b981;
+  --color-on-accent: #ffffff;
+}
+
+[data-theme='rose'] {
+  color-scheme: light;
+  --color-app: #fdf2f8;
+  --color-panel: #fffbfd;
+  --color-line: #fbcfe8;
+  --color-line-strong: #f9a8d4;
+  --color-ink: #500724;
+  --color-ink-soft: #9d174d;
+  --color-muted: #be185d;
+  --color-faint: #db7fa9;
+  --color-accent: #e11d48;
+  --color-accent-strong: #f43f5e;
+  --color-on-accent: #fff1f5;
+}
+
 body {
   margin: 0;
-  background-color: #020617;
-  color: #f1f5f9;
+  background-color: var(--color-app);
+  color: var(--color-ink);
 }

@@ -3,14 +3,15 @@ import { X } from 'lucide-react'
 import { EXPENSE_CATEGORIES, type Expense, type ExpenseCategory, type ExpenseType } from '../../types/finance'
 import type { Currency } from '../../types/money'
 import { useFinanceStore } from '../../hooks/useFinanceStore'
-import { todayISODate } from '../../utils/finance'
+import { addMonthsUTC, todayISODate } from '../../utils/finance'
 import { DEFAULT_STREAMING_SERVICES } from '../../utils/streamingServices'
 import { StreamingServiceField } from './StreamingServiceField'
 
 interface ExpenseFormDrawerProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (expense: Expense) => void
+  /** Puede ser más de un `Expense` si se cargó como gasto recurrente. */
+  onSubmit: (expenses: Expense[]) => void
   /** Si se pasa, el formulario edita ese gasto; si no, carga uno nuevo. */
   initialExpense?: Expense
   /**
@@ -21,11 +22,13 @@ interface ExpenseFormDrawerProps {
 }
 
 const INPUT_CLASSNAME =
-  'w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none'
+  'w-full rounded-lg border border-line bg-app px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none'
 
 const STREAMING_CATEGORY: ExpenseCategory = 'Streaming (Netflix, YT)'
 const DEFAULT_EXPENSE_TYPE: ExpenseType = 'FIJO'
 const DEFAULT_CATEGORY: ExpenseCategory = EXPENSE_CATEGORIES.FIJO[0]
+/** Tope de meses que se pueden generar de una sola carga recurrente. */
+const MAX_RECURRING_MONTHS = 24
 
 function toDateInputValue(date: Date): string {
   const year = date.getUTCFullYear()
@@ -45,6 +48,8 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
   const [subcategoria, setSubcategoria] = useState('')
   const [fecha, setFecha] = useState(todayISODate())
   const [descripcion, setDescripcion] = useState('')
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurringMonths, setRecurringMonths] = useState('1')
 
   const categoryOptions = EXPENSE_CATEGORIES[expenseType]
 
@@ -66,6 +71,9 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
       setSubcategoria(initialExpense.subcategoria ?? '')
       setFecha(toDateInputValue(initialExpense.fecha))
       setDescripcion(initialExpense.descripcion)
+      // Editar un gasto puntual nunca dispara una nueva carga recurrente.
+      setIsRecurring(false)
+      setRecurringMonths('1')
     } else {
       setMonto('')
       setMoneda('ARS')
@@ -74,6 +82,8 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
       setSubcategoria('')
       setFecha(todayISODate())
       setDescripcion('')
+      setIsRecurring(false)
+      setRecurringMonths('1')
     }
   }, [isOpen, initialExpense, prefill])
 
@@ -88,6 +98,12 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
     setCategory(nextCategory)
     if (nextCategory !== STREAMING_CATEGORY) {
       setSubcategoria('')
+    }
+    // El checkbox de recurrencia solo tiene sentido para Fijo: si se pasa a
+    // Flexible, se apaga (no queda "activado" de forma invisible).
+    if (nextType !== 'FIJO') {
+      setIsRecurring(false)
+      setRecurringMonths('1')
     }
   }
 
@@ -105,38 +121,56 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
     const montoNumerico = Number(monto)
     if (!montoNumerico || montoNumerico <= 0 || !fecha) return
 
-    onSubmit({
-      id: initialExpense?.id ?? `exp-${Date.now()}`,
-      fecha: new Date(fecha),
+    const baseExpense = {
       descripcion: descripcion.trim() || category,
       monto: montoNumerico,
       moneda,
       expenseType,
       category,
       subcategoria: category === STREAMING_CATEGORY && subcategoria ? subcategoria : undefined,
-    })
+    }
+
+    // Solo se repite al crear un gasto Fijo con el checkbox activado — nunca
+    // al editar uno existente.
+    const shouldRepeat = !isEditMode && expenseType === 'FIJO' && isRecurring
+    const repeatCount = shouldRepeat
+      ? Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_RECURRING_MONTHS)
+      : 1
+    // Todos los gastos de este lote comparten `recurringGroupId` (si hay más de uno).
+    const recurringGroupId = repeatCount > 1 ? `rec-${Date.now()}` : undefined
+    const baseDate = new Date(fecha)
+    const batchTimestamp = Date.now()
+
+    const expenses: Expense[] = Array.from({ length: repeatCount }, (_, index) => ({
+      ...baseExpense,
+      id: initialExpense?.id ?? `exp-${batchTimestamp}-${index}`,
+      fecha: index === 0 ? baseDate : addMonthsUTC(baseDate, index),
+      recurringGroupId,
+    }))
+
+    onSubmit(expenses)
     onClose()
   }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-      <div className="flex h-full w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-slate-800 bg-slate-900 p-6">
+      <div className="flex h-full w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-line bg-panel p-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-100">
+          <h3 className="text-lg font-semibold text-ink">
             {isEditMode ? 'Editar gasto' : 'Cargar nuevo gasto'}
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+            className="rounded-lg p-1 text-muted hover:bg-line hover:text-ink"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm text-slate-300">
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Monto
             <div className="flex gap-2">
               <input
@@ -153,7 +187,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
                 aria-label="Moneda"
                 value={moneda}
                 onChange={(e) => setMoneda(e.target.value as Currency)}
-                className="rounded-lg border border-slate-800 bg-slate-950 px-2 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="rounded-lg border border-line bg-app px-2 py-2 text-sm text-ink focus:border-accent focus:outline-none"
               >
                 <option value="ARS">ARS</option>
                 <option value="USD">USD</option>
@@ -161,7 +195,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
             </div>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-slate-300">
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Tipo
             <select value={expenseType} onChange={handleExpenseTypeChange} className={INPUT_CLASSNAME}>
               <option value="FIJO">Fijo</option>
@@ -169,7 +203,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-slate-300">
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Categoría
             <select value={category} onChange={handleCategoryChange} className={INPUT_CLASSNAME}>
               {categoryOptions.map((cat) => (
@@ -181,7 +215,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
           </label>
 
           {category === STREAMING_CATEGORY && (
-            <label className="flex flex-col gap-1 text-sm text-slate-300">
+            <label className="flex flex-col gap-1 text-sm text-ink-soft">
               Servicio
               <StreamingServiceField
                 value={subcategoria}
@@ -192,7 +226,40 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
             </label>
           )}
 
-          <label className="flex flex-col gap-1 text-sm text-slate-300">
+          {!isEditMode && expenseType === 'FIJO' && (
+            <div className="flex flex-col gap-2 rounded-lg border border-line bg-app p-3">
+              <label className="flex items-center gap-2 text-sm text-ink-soft">
+                <input
+                  type="checkbox"
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                  className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                />
+                Es un gasto recurrente
+              </label>
+
+              {isRecurring && (
+                <label className="flex flex-col gap-1 text-sm text-ink-soft">
+                  Repetir por X meses
+                  <input
+                    type="number"
+                    min="1"
+                    max={MAX_RECURRING_MONTHS}
+                    step="1"
+                    value={recurringMonths}
+                    onChange={(e) => setRecurringMonths(e.target.value)}
+                    className={INPUT_CLASSNAME}
+                  />
+                  <span className="text-xs text-faint">
+                    Se van a crear {Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_RECURRING_MONTHS)} gastos
+                    (uno por mes, hasta {MAX_RECURRING_MONTHS}).
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
+
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Fecha
             <input
               type="date"
@@ -203,7 +270,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-slate-300">
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Descripción
             <input
               type="text"
@@ -216,7 +283,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
 
           <button
             type="submit"
-            className="mt-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
+            className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
           >
             {isEditMode ? 'Guardar cambios' : 'Guardar gasto'}
           </button>

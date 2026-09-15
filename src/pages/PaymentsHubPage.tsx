@@ -12,7 +12,7 @@ type ServiceFormState = { mode: 'create' } | { mode: 'edit'; service: ServiceCon
 
 export function PaymentsHubPage() {
   const { services, addService, updateService, removeService } = useServicesStore()
-  const { addExpense } = useFinanceStore()
+  const { addExpenses } = useFinanceStore()
 
   const [formState, setFormState] = useState<ServiceFormState>(null)
   // Servicio para el que se está registrando un pago (abre el drawer de Gasto pre-completado).
@@ -33,20 +33,20 @@ export function PaymentsHubPage() {
     setFormState(null)
   }
 
-  function handleSubmitExpense(expense: Expense) {
-    addExpense(expense)
+  function handleSubmitExpense(expenses: Expense[]) {
+    addExpenses(expenses)
     setPayingService(null)
   }
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">Centro de Pagos</h2>
-        <p className="text-sm text-slate-400">Directorio de servicios para pagar tus gastos fijos</p>
+        <h2 className="text-xl font-semibold text-ink">Centro de Pagos</h2>
+        <p className="text-sm text-muted">Directorio de servicios para pagar tus gastos fijos</p>
       </div>
 
       {services.length === 0 ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
           Todavía no configuraste ningún servicio.
         </div>
       ) : (

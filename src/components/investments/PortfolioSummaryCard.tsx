@@ -17,13 +17,13 @@ export function PortfolioSummaryCard({ positions, tipoCambio }: PortfolioSummary
 
   return (
     <StatCard title="Valor Total de la Cartera" icon={Briefcase} iconClassName="text-emerald-400">
-      <span className="text-2xl font-semibold text-slate-100">
+      <span className="text-2xl font-semibold text-ink">
         {formatMoney({ amount: valorTotalARS, currency: 'ARS' })}
       </span>
       <p className={`text-sm font-medium ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
         {formatMoney({ amount: resultadoTotalARS, currency: 'ARS' })} ({formatPercentage(porcentajeTotal)})
       </p>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-faint">
         Todas las posiciones estandarizadas a ARS (TC estimado {tipoCambio})
       </p>
     </StatCard>

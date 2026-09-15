@@ -43,6 +43,13 @@ export interface Expense {
   category: ExpenseCategory
   /** Detalle opcional dentro de la categoría (ej: en Streaming, qué servicio puntual: Netflix, YT Premium...). */
   subcategoria?: string
+  /**
+   * Si este gasto se generó como parte de una carga "recurrente" (Fijo,
+   * repetido por N meses), todos los gastos de ese lote comparten este id.
+   * Sirve para, más adelante, poder "eliminar todos los meses futuros" de
+   * un gasto recurrente de una sola vez.
+   */
+  recurringGroupId?: string
 }
 
 export interface Income {

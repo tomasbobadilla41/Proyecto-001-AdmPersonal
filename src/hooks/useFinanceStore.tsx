@@ -41,6 +41,8 @@ interface FinanceStore {
   exchangeRates: ExchangeRate[]
   /** Agrega un gasto nuevo. */
   addExpense: (expense: Expense) => void
+  /** Agrega varios gastos de una sola vez (ej: una carga recurrente de N meses) en un único update. */
+  addExpenses: (expenses: Expense[]) => void
   /** Reemplaza un gasto existente (mismo `id`). */
   updateExpense: (expense: Expense) => void
   removeExpense: (id: string) => void
@@ -88,6 +90,10 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
     (expense: Expense) => setExpenses((prev) => [...prev, expense]),
     [setExpenses],
   )
+  const addExpenses = useCallback(
+    (newExpenses: Expense[]) => setExpenses((prev) => [...prev, ...newExpenses]),
+    [setExpenses],
+  )
   const updateExpense = useCallback(
     (expense: Expense) => setExpenses((prev) => replaceById(prev, expense)),
     [setExpenses],
@@ -133,6 +139,7 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
       investments,
       exchangeRates,
       addExpense,
+      addExpenses,
       updateExpense,
       removeExpense,
       upsertIncome,
@@ -149,6 +156,7 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
       investments,
       exchangeRates,
       addExpense,
+      addExpenses,
       updateExpense,
       removeExpense,
       upsertIncome,

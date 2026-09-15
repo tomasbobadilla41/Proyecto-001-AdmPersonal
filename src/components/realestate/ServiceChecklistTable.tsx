@@ -22,16 +22,16 @@ export function ServiceChecklistTable({
 }: ServiceChecklistTableProps) {
   if (services.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-sm text-slate-500">
+      <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
         Configurá servicios arriba para verlos en el checklist mensual.
       </div>
     )
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
+    <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
       <table className="w-full text-left text-sm">
-        <thead className="bg-slate-900/70 text-slate-400">
+        <thead className="bg-panel/70 text-muted">
           <tr>
             <th className="px-4 py-3 font-medium">Servicio</th>
             <th className="px-4 py-3 font-medium">Nro. de Cuenta</th>
@@ -39,7 +39,7 @@ export function ServiceChecklistTable({
             <th className="px-4 py-3 text-right font-medium">Estado</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800">
+        <tbody className="divide-y divide-line">
           {services.map((service) => (
             <ServiceChecklistRow
               key={service.id}
