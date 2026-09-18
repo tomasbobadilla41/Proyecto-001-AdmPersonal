@@ -6,6 +6,8 @@ import { SavingsCard } from '../components/dashboard/SavingsCard'
 import { ExchangeRateInput } from '../components/dashboard/ExchangeRateInput'
 import { IncomeExpenseChart } from '../components/dashboard/IncomeExpenseChart'
 import { QuickPayList } from '../components/dashboard/QuickPayList'
+import { ActiveInstallmentsWidget } from '../components/dashboard/ActiveInstallmentsWidget'
+import { ExpenseBreakdownWidget } from '../components/dashboard/ExpenseBreakdownWidget'
 import { useFinanceStore } from '../hooks/useFinanceStore'
 import { calculateActualSplit, calculateBudgetRule } from '../utils/budgetRule'
 import { calculateMonthlySummaries, getExchangeRate, getTrailingPeriods, MESES_LARGOS } from '../utils/finance'
@@ -39,6 +41,14 @@ export function DashboardPage() {
     [expenses, current.mes, current.anio, current.tipoCambioUsado],
   )
   const remanente = current.ingresosTotalesARS - fijosReal - flexiblesReal
+
+  const currentMonthExpenses = useMemo(
+    () =>
+      expenses.filter(
+        (e) => e.fecha.getUTCMonth() + 1 === current.mes && e.fecha.getUTCFullYear() === current.anio,
+      ),
+    [expenses, current.mes, current.anio],
+  )
 
   function handleSaveExchangeRate(valor: number) {
     upsertExchangeRate({
@@ -84,6 +94,11 @@ export function DashboardPage() {
           <IncomeExpenseChart summaries={summaries} />
         </div>
         <QuickPayList />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <ActiveInstallmentsWidget expenses={currentMonthExpenses} />
+        <ExpenseBreakdownWidget expenses={currentMonthExpenses} tipoCambio={current.tipoCambioUsado} />
       </div>
     </div>
   )

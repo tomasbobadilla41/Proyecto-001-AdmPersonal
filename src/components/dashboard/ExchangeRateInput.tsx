@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { DollarSign, Loader2, Pencil, RefreshCw } from 'lucide-react'
 import { useDolarOficial } from '../../hooks/useDolarOficial'
 import { MESES_CORTOS } from '../../utils/finance'
@@ -32,6 +32,16 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
     const venta = await refresh()
     if (venta !== null) onSave(venta)
   }
+
+  // Al cargar la página, consulta la cotización oficial automáticamente —
+  // ya no hace falta tocar el botón de refrescar para tener el valor del día.
+  // Se ejecuta una sola vez por montaje (al abrir/recargar la app); si falla
+  // (sin internet, API caída), no rompe nada: el valor cargado sigue como
+  // estaba y el usuario siempre puede editarlo a mano con el lápiz.
+  useEffect(() => {
+    handleRefresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (isEditing) {
     return (

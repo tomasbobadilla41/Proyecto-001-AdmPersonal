@@ -9,7 +9,7 @@ import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { useFinanceStore } from '../hooks/useFinanceStore'
 import { formatMoney } from '../utils/currency'
-import { formatDateAR, getAvailableYears, getExchangeRate, getMostRecentExpensePeriod } from '../utils/finance'
+import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finance'
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 
@@ -17,12 +17,13 @@ export function ExpensesPage() {
   const { expenses, exchangeRates, addExpenses, updateExpense, removeExpense } = useFinanceStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
 
-  const [mes, setMes] = useState(
-    () => getMostRecentExpensePeriod(expenses)?.mes ?? new Date().getMonth() + 1,
-  )
-  const [anio, setAnio] = useState(
-    () => getMostRecentExpensePeriod(expenses)?.anio ?? new Date().getFullYear(),
-  )
+  // Arranca en el mes calendario real de hoy — igual que el Dashboard —, no
+  // en el mes del gasto "más reciente" cargado. Con cuotas/recurrencia una
+  // sola carga puede generar meses varios meses hacia el futuro, así que
+  // "más reciente" podía terminar siendo, por ej., la última cuota (a 6
+  // meses de hoy) y esta pantalla se abría ahí sin avisar.
+  const [mes, setMes] = useState(() => new Date().getMonth() + 1)
+  const [anio, setAnio] = useState(() => new Date().getFullYear())
 
   const years = useMemo(() => getAvailableYears(expenses), [expenses])
   const tipoCambio = getExchangeRate(exchangeRates, mes, anio)

@@ -125,15 +125,6 @@ export function getAvailableYears(expenses: Expense[]): number[] {
   return Array.from(years).sort((a, b) => b - a)
 }
 
-/** Mes/año del gasto más reciente (se usa como valor por defecto del selector). */
-export function getMostRecentExpensePeriod(
-  expenses: Expense[],
-): { mes: number; anio: number } | undefined {
-  if (expenses.length === 0) return undefined
-  const latest = expenses.reduce((max, e) => (e.fecha > max.fecha ? e : max))
-  return { mes: latest.fecha.getUTCMonth() + 1, anio: latest.fecha.getUTCFullYear() }
-}
-
 /**
  * Fecha de hoy en formato 'YYYY-MM-DD' (para precargar un `<input type="date">`).
  * Usa getters locales a propósito: el usuario piensa en su día calendario local,

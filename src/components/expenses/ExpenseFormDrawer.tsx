@@ -27,8 +27,8 @@ const INPUT_CLASSNAME =
 const STREAMING_CATEGORY: ExpenseCategory = 'Streaming (Netflix, YT)'
 const DEFAULT_EXPENSE_TYPE: ExpenseType = 'FIJO'
 const DEFAULT_CATEGORY: ExpenseCategory = EXPENSE_CATEGORIES.FIJO[0]
-/** Tope de meses que se pueden generar de una sola carga recurrente. */
-const MAX_RECURRING_MONTHS = 24
+/** Tope de meses que se pueden generar de una sola carga (recurrente o en cuotas). */
+const MAX_REPEAT_MONTHS = 24
 
 function toDateInputValue(date: Date): string {
   const year = date.getUTCFullYear()
@@ -50,6 +50,8 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
   const [descripcion, setDescripcion] = useState('')
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurringMonths, setRecurringMonths] = useState('1')
+  const [isInstallment, setIsInstallment] = useState(false)
+  const [installmentCount, setInstallmentCount] = useState('1')
 
   const categoryOptions = EXPENSE_CATEGORIES[expenseType]
 
@@ -71,9 +73,11 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
       setSubcategoria(initialExpense.subcategoria ?? '')
       setFecha(toDateInputValue(initialExpense.fecha))
       setDescripcion(initialExpense.descripcion)
-      // Editar un gasto puntual nunca dispara una nueva carga recurrente.
+      // Editar un gasto puntual nunca dispara una nueva carga recurrente ni en cuotas.
       setIsRecurring(false)
       setRecurringMonths('1')
+      setIsInstallment(false)
+      setInstallmentCount('1')
     } else {
       setMonto('')
       setMoneda('ARS')
@@ -84,6 +88,8 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
       setDescripcion('')
       setIsRecurring(false)
       setRecurringMonths('1')
+      setIsInstallment(false)
+      setInstallmentCount('1')
     }
   }, [isOpen, initialExpense, prefill])
 
@@ -107,6 +113,25 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
     }
   }
 
+  // "Recurrente" y "en cuotas" son modos alternativos (ambos generan varios
+  // meses, pero con lógica distinta): activar uno apaga el otro para no
+  // dejar un estado ambiguo (ej: dos cantidades de meses conflictivas).
+  function handleRecurringToggle(checked: boolean) {
+    setIsRecurring(checked)
+    if (checked) {
+      setIsInstallment(false)
+      setInstallmentCount('1')
+    }
+  }
+
+  function handleInstallmentToggle(checked: boolean) {
+    setIsInstallment(checked)
+    if (checked) {
+      setIsRecurring(false)
+      setRecurringMonths('1')
+    }
+  }
+
   function handleCategoryChange(event: ChangeEvent<HTMLSelectElement>) {
     const nextCategory = event.target.value as ExpenseCategory
     setCategory(nextCategory)
@@ -121,30 +146,37 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
     const montoNumerico = Number(monto)
     if (!montoNumerico || montoNumerico <= 0 || !fecha) return
 
-    const baseExpense = {
-      descripcion: descripcion.trim() || category,
-      monto: montoNumerico,
-      moneda,
-      expenseType,
-      category,
-      subcategoria: category === STREAMING_CATEGORY && subcategoria ? subcategoria : undefined,
+    const baseDescripcion = descripcion.trim() || category
+
+    // "En cuotas" y "recurrente" nunca están activos a la vez (ver los
+    // toggles), pero por si acaso: cuotas tiene prioridad si ambos llegaran
+    // a estar prendidos. Ninguno de los dos aplica al editar un gasto existente.
+    const isInstallmentActive = !isEditMode && isInstallment
+    const isRecurringActive = !isEditMode && !isInstallmentActive && expenseType === 'FIJO' && isRecurring
+
+    let repeatCount = 1
+    if (isInstallmentActive) {
+      repeatCount = Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)
+    } else if (isRecurringActive) {
+      repeatCount = Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_REPEAT_MONTHS)
     }
 
-    // Solo se repite al crear un gasto Fijo con el checkbox activado — nunca
-    // al editar uno existente.
-    const shouldRepeat = !isEditMode && expenseType === 'FIJO' && isRecurring
-    const repeatCount = shouldRepeat
-      ? Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_RECURRING_MONTHS)
-      : 1
     // Todos los gastos de este lote comparten `recurringGroupId` (si hay más de uno).
     const recurringGroupId = repeatCount > 1 ? `rec-${Date.now()}` : undefined
     const baseDate = new Date(fecha)
     const batchTimestamp = Date.now()
 
     const expenses: Expense[] = Array.from({ length: repeatCount }, (_, index) => ({
-      ...baseExpense,
       id: initialExpense?.id ?? `exp-${batchTimestamp}-${index}`,
       fecha: index === 0 ? baseDate : addMonthsUTC(baseDate, index),
+      // En cuotas, cada registro se renombra "Descripción (Cuota i/N)"; en
+      // los demás casos (recurrente o único), la descripción no cambia.
+      descripcion: isInstallmentActive ? `${baseDescripcion} (Cuota ${index + 1}/${repeatCount})` : baseDescripcion,
+      monto: montoNumerico,
+      moneda,
+      expenseType,
+      category,
+      subcategoria: category === STREAMING_CATEGORY && subcategoria ? subcategoria : undefined,
       recurringGroupId,
     }))
 
@@ -226,36 +258,73 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
             </label>
           )}
 
-          {!isEditMode && expenseType === 'FIJO' && (
-            <div className="flex flex-col gap-2 rounded-lg border border-line bg-app p-3">
-              <label className="flex items-center gap-2 text-sm text-ink-soft">
-                <input
-                  type="checkbox"
-                  checked={isRecurring}
-                  onChange={(e) => setIsRecurring(e.target.checked)}
-                  className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
-                />
-                Es un gasto recurrente
-              </label>
+          {!isEditMode && (
+            <div className="flex flex-col gap-3 rounded-lg border border-line bg-app p-3">
+              {expenseType === 'FIJO' && (
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 text-sm text-ink-soft">
+                    <input
+                      type="checkbox"
+                      checked={isRecurring}
+                      onChange={(e) => handleRecurringToggle(e.target.checked)}
+                      className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                    />
+                    Es un gasto recurrente
+                  </label>
 
-              {isRecurring && (
-                <label className="flex flex-col gap-1 text-sm text-ink-soft">
-                  Repetir por X meses
-                  <input
-                    type="number"
-                    min="1"
-                    max={MAX_RECURRING_MONTHS}
-                    step="1"
-                    value={recurringMonths}
-                    onChange={(e) => setRecurringMonths(e.target.value)}
-                    className={INPUT_CLASSNAME}
-                  />
-                  <span className="text-xs text-faint">
-                    Se van a crear {Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_RECURRING_MONTHS)} gastos
-                    (uno por mes, hasta {MAX_RECURRING_MONTHS}).
-                  </span>
-                </label>
+                  {isRecurring && (
+                    <label className="flex flex-col gap-1 text-sm text-ink-soft">
+                      Repetir por X meses
+                      <input
+                        type="number"
+                        min="1"
+                        max={MAX_REPEAT_MONTHS}
+                        step="1"
+                        value={recurringMonths}
+                        onChange={(e) => setRecurringMonths(e.target.value)}
+                        className={INPUT_CLASSNAME}
+                      />
+                      <span className="text-xs text-faint">
+                        Se van a crear {Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_REPEAT_MONTHS)} gastos
+                        (uno por mes, hasta {MAX_REPEAT_MONTHS}).
+                      </span>
+                    </label>
+                  )}
+                </div>
               )}
+
+              {expenseType === 'FIJO' && <div className="border-t border-line" />}
+
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-sm text-ink-soft">
+                  <input
+                    type="checkbox"
+                    checked={isInstallment}
+                    onChange={(e) => handleInstallmentToggle(e.target.checked)}
+                    className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                  />
+                  Es compra en Cuotas
+                </label>
+
+                {isInstallment && (
+                  <label className="flex flex-col gap-1 text-sm text-ink-soft">
+                    Cantidad total de cuotas
+                    <input
+                      type="number"
+                      min="1"
+                      max={MAX_REPEAT_MONTHS}
+                      step="1"
+                      value={installmentCount}
+                      onChange={(e) => setInstallmentCount(e.target.value)}
+                      className={INPUT_CLASSNAME}
+                    />
+                    <span className="text-xs text-faint">
+                      Ej: "{(descripcion.trim() || category)} (Cuota 1/
+                      {Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)})", uno por mes.
+                    </span>
+                  </label>
+                )}
+              </div>
             </div>
           )}
 
