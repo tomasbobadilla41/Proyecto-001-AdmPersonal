@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@custom-variant dark (&:is(.dark *));
 
 /*
  * Tokens de tema. Declararlos como colores de Tailwind bajo `@theme` (en vez
@@ -33,6 +36,7 @@
 
 :root {
   color-scheme: dark;
+  --radius: 0.5rem; /* radio base de los componentes shadcn/ui — coincide con el rounded-lg que ya usaba el resto de la app */
 }
 
 [data-theme='light'] {
@@ -69,4 +73,47 @@ body {
   margin: 0;
   background-color: var(--color-app);
   color: var(--color-ink);
+}
+
+/*
+ * Alias de shadcn/ui hacia los tokens propios de arriba. En vez de traer la
+ * paleta gris que genera `shadcn init` (pensada para alternar con una clase
+ * `.dark`), sus componentes (Button, Card, Input, Sonner...) leen estos
+ * mismos nombres estándar pero resueltos contra los colores que ya existen,
+ * así heredan los tres temas (dark/light/rose) sin duplicar la paleta.
+ */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--color-app);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-panel);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-panel);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-on-accent);
+  --color-secondary: var(--color-line);
+  --color-secondary-foreground: var(--color-ink-soft);
+  --color-muted-foreground: var(--color-muted);
+  --color-accent-foreground: var(--color-on-accent);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-accent);
+
+  /* Fijo, mismo criterio que los colores de estado financiero de arriba. */
+  --color-destructive: #f43f5e;
+  --color-destructive-foreground: #fff1f2;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
 }

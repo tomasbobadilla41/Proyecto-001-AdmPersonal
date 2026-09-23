@@ -1,1 +1,1 @@
-export type TabKey = 'dashboard' | 'gastos' | 'inversiones' | 'pagos' | 'inmuebles'
+export type TabKey = 'dashboard' | 'gastos' | 'inversiones' | 'pagos' | 'inmuebles' | 'config'
