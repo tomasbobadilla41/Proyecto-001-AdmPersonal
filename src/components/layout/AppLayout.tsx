@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { TabKey } from '../../types/navigation'
 import { ThemeSelector } from './ThemeSelector'
+import { UserNav } from './UserNav'
 
 interface NavItem {
   key: TabKey
@@ -64,39 +65,49 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
         </div>
       </aside>
 
-      {/* Encabezado + menú superior (mobile) */}
-      <header className="flex flex-col border-b border-line bg-panel/50 md:hidden">
-        <div className="flex items-center justify-between gap-2 px-4 py-3">
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <Wallet className="h-5 w-5 text-accent" />
-            Adm Personal
-          </div>
-          <ThemeSelector />
-        </div>
-        <nav className="flex border-t border-line">
-          {PERSONAL_NAV_ITEMS.map((item) => (
-            <NavButton
-              key={item.key}
-              item={item}
-              active={activeTab === item.key}
-              onClick={onTabChange}
-              variant="mobile"
-            />
-          ))}
-          <div className="my-2 w-px bg-line" />
-          {PROPERTY_NAV_ITEMS.map((item) => (
-            <NavButton
-              key={item.key}
-              item={item}
-              active={activeTab === item.key}
-              onClick={onTabChange}
-              variant="mobile"
-            />
-          ))}
-        </nav>
-      </header>
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Barra superior (desktop): aloja el menú de usuario, estilo Google/YouTube */}
+        <header className="hidden items-center justify-end border-b border-line bg-panel/50 px-6 py-3 md:flex">
+          <UserNav />
+        </header>
 
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+        {/* Encabezado + menú superior (mobile) */}
+        <header className="flex flex-col border-b border-line bg-panel/50 md:hidden">
+          <div className="flex items-center justify-between gap-2 px-4 py-3">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Wallet className="h-5 w-5 text-accent" />
+              Adm Personal
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeSelector />
+              <UserNav />
+            </div>
+          </div>
+          <nav className="flex border-t border-line">
+            {PERSONAL_NAV_ITEMS.map((item) => (
+              <NavButton
+                key={item.key}
+                item={item}
+                active={activeTab === item.key}
+                onClick={onTabChange}
+                variant="mobile"
+              />
+            ))}
+            <div className="my-2 w-px bg-line" />
+            {PROPERTY_NAV_ITEMS.map((item) => (
+              <NavButton
+                key={item.key}
+                item={item}
+                active={activeTab === item.key}
+                onClick={onTabChange}
+                variant="mobile"
+              />
+            ))}
+          </nav>
+        </header>
+
+        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   )
 }

@@ -14,9 +14,10 @@ Pautas de desarrollo para este proyecto. Claude Code debe seguirlas en todo trab
 - **Lucide Icons** (`lucide-react`) para toda la iconografía. No mezclar con otras librerías de íconos.
 - **Recharts** para visualización de datos y gráficos.
 
-## Arquitectura y Almacenamiento
-- **Cero Backend:** La aplicación no tiene base de datos externa. Toda la persistencia de datos debe realizarse localmente utilizando `localStorage`. 
-- **Estado Global:** Utilizar el store existente para la gestión de ingresos, gastos fijos y gastos flexibles.
+## Arquitectura y Backend (Supabase)
+- **Backend as a Service:** La aplicación utiliza Supabase para autenticación de usuarios y base de datos (PostgreSQL).
+- **Gestión de Estado:** La transición actual es migrar del `localStorage` a consultas asíncronas hacia Supabase. 
+- **Autenticación:** Todo usuario debe tener una sesión activa para ver el Dashboard. Las tablas en la base de datos deben usar Row Level Security (RLS) para que cada usuario solo vea sus propios gastos.
 
 ## Reglas de Negocio Financiero
 - **Monedas:** La app maneja dos monedas: **ARS** (peso argentino) y **USD** (dólar estadounidense). Todo tipo, componente o utilidad que represente un monto debe dejar explícita la moneda (por ejemplo, un campo `currency: 'ARS' | 'USD'`), evitando números sin moneda asociada. Centralizar la lógica de formateo y conversión.

@@ -6,32 +6,63 @@ import { InvestmentsPage } from './pages/InvestmentsPage'
 import { PaymentsHubPage } from './pages/PaymentsHubPage'
 import { RealEstateDashboardView } from './pages/RealEstateDashboardView'
 import { SettingsPage } from './pages/SettingsPage'
+import { AuthView } from './pages/AuthView'
+import { UpdatePasswordView } from './pages/UpdatePasswordView'
 import { FinanceStoreProvider } from './hooks/useFinanceStore'
 import { ServicesStoreProvider } from './hooks/useServicesStore'
 import { RealEstateStoreProvider } from './hooks/useRealEstateStore'
 import { ThemeProvider } from './hooks/useTheme'
+import { AuthProvider, useAuth } from './hooks/useAuth'
 import { Toaster } from './components/ui/sonner'
 import type { TabKey } from './types/navigation'
 
-function App() {
+function AuthGate() {
+  const { session, loading } = useAuth()
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard')
+
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center bg-app text-muted">Cargando…</div>
+  }
+
+  if (!session) {
+    return <AuthView />
+  }
+
+  return (
+    <FinanceStoreProvider>
+      <ServicesStoreProvider>
+        <RealEstateStoreProvider>
+          <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
+            {activeTab === 'dashboard' && <DashboardPage />}
+            {activeTab === 'gastos' && <ExpensesPage />}
+            {activeTab === 'inversiones' && <InvestmentsPage />}
+            {activeTab === 'pagos' && <PaymentsHubPage />}
+            {activeTab === 'inmuebles' && <RealEstateDashboardView />}
+            {activeTab === 'config' && <SettingsPage />}
+          </AppLayout>
+        </RealEstateStoreProvider>
+      </ServicesStoreProvider>
+    </FinanceStoreProvider>
+  )
+}
+
+function App() {
+  const [path, setPath] = useState(() => window.location.pathname)
 
   return (
     <ThemeProvider>
-      <FinanceStoreProvider>
-        <ServicesStoreProvider>
-          <RealEstateStoreProvider>
-            <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
-              {activeTab === 'dashboard' && <DashboardPage />}
-              {activeTab === 'gastos' && <ExpensesPage />}
-              {activeTab === 'inversiones' && <InvestmentsPage />}
-              {activeTab === 'pagos' && <PaymentsHubPage />}
-              {activeTab === 'inmuebles' && <RealEstateDashboardView />}
-              {activeTab === 'config' && <SettingsPage />}
-            </AppLayout>
-          </RealEstateStoreProvider>
-        </ServicesStoreProvider>
-      </FinanceStoreProvider>
+      <AuthProvider>
+        {path === '/update-password' ? (
+          <UpdatePasswordView
+            onSuccess={() => {
+              window.history.replaceState(null, '', '/')
+              setPath('/')
+            }}
+          />
+        ) : (
+          <AuthGate />
+        )}
+      </AuthProvider>
       {/* top-right: varias pantallas (Gastos, Inversiones...) tienen un FloatingActionButton fijo abajo a la derecha */}
       <Toaster richColors position="top-right" />
     </ThemeProvider>
