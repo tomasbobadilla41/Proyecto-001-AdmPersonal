@@ -70,16 +70,28 @@ export interface ExchangeRate {
   valor: number
 }
 
-export type InvestmentType = 'CEDEAR' | 'MEP' | 'Crypto' | 'ON' | 'FCI'
+/** Tipo de activo del Portfolio Tracker. */
+export type PortfolioAssetType = 'crypto' | 'cedear'
 
-export interface InvestmentPosition {
+/**
+ * Registro de una compra de inversión (cripto o CEDEAR). Cada compra queda
+ * como un registro propio — el promedio de precio (PPC) de un ticker se
+ * calcula agregando todos sus registros, no se guarda ya promediado.
+ */
+export interface PortfolioHolding {
   id: string
+  assetType: PortfolioAssetType
+  /** Símbolo del activo (ej: 'BTC', 'AAPL'). */
   ticker: string
-  tipo: InvestmentType
-  cantidad: number
-  precioCompraPromedio: number
-  precioActual: number
-  moneda: Currency
+  /** Monto fiat invertido en esta compra puntual. */
+  amountInvested: number
+  /** Precio del activo al momento de esta compra. */
+  purchasePrice: number
+  /** Cantidad de nominales o fracciones adquiridas (amountInvested / purchasePrice). */
+  quantity: number
+  /** Moneda de `amountInvested`/`purchasePrice` — USD para cripto, ARS para CEDEARs (operan en BYMA). */
+  currency: Currency
+  date: string
 }
 
 /**

@@ -1,11 +1,10 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
-import type { ExchangeRate, Expense, Income, InvestmentPosition } from '../types/finance'
+import type { ExchangeRate, Expense, Income } from '../types/finance'
 import { useLocalStorage } from './useLocalStorage'
 
 const STORAGE_KEYS = {
   expenses: 'admpersonal:expenses',
   incomes: 'admpersonal:incomes',
-  investments: 'admpersonal:investments',
   exchangeRates: 'admpersonal:exchangeRates',
   customStreamingServices: 'admpersonal:customStreamingServices',
 } as const
@@ -37,7 +36,6 @@ function upsertByPeriod<T extends { mes: number; anio: number }>(items: T[], upd
 interface FinanceStore {
   expenses: Expense[]
   incomes: Income[]
-  investments: InvestmentPosition[]
   exchangeRates: ExchangeRate[]
   /** Agrega un gasto nuevo. */
   addExpense: (expense: Expense) => void
@@ -48,11 +46,6 @@ interface FinanceStore {
   removeExpense: (id: string) => void
   /** Crea o reemplaza el Income de un mes/año (un registro por período). */
   upsertIncome: (income: Income) => void
-  /** Agrega una posición de inversión nueva. */
-  addInvestment: (position: InvestmentPosition) => void
-  /** Reemplaza una posición existente (mismo `id`) — por ej. para actualizar su precio actual. */
-  updateInvestment: (position: InvestmentPosition) => void
-  removeInvestment: (id: string) => void
   /** Crea o reemplaza la cotización del dólar de un mes/año. */
   upsertExchangeRate: (rate: ExchangeRate) => void
   /** Servicios de streaming que el usuario agregó a mano (además de los precargados). */
@@ -79,7 +72,6 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
     deserialize: deserializeExpenses,
   })
   const [incomes, setIncomes] = useLocalStorage<Income[]>(STORAGE_KEYS.incomes, [])
-  const [investments, setInvestments] = useLocalStorage<InvestmentPosition[]>(STORAGE_KEYS.investments, [])
   const [exchangeRates, setExchangeRates] = useLocalStorage<ExchangeRate[]>(STORAGE_KEYS.exchangeRates, [])
   const [customStreamingServices, setCustomStreamingServices] = useLocalStorage<string[]>(
     STORAGE_KEYS.customStreamingServices,
@@ -108,19 +100,6 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
     [setIncomes],
   )
 
-  const addInvestment = useCallback(
-    (position: InvestmentPosition) => setInvestments((prev) => [...prev, position]),
-    [setInvestments],
-  )
-  const updateInvestment = useCallback(
-    (position: InvestmentPosition) => setInvestments((prev) => replaceById(prev, position)),
-    [setInvestments],
-  )
-  const removeInvestment = useCallback(
-    (id: string) => setInvestments((prev) => prev.filter((p) => p.id !== id)),
-    [setInvestments],
-  )
-
   const upsertExchangeRate = useCallback(
     (rate: ExchangeRate) => setExchangeRates((prev) => upsertByPeriod(prev, rate)),
     [setExchangeRates],
@@ -136,16 +115,12 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       expenses,
       incomes,
-      investments,
       exchangeRates,
       addExpense,
       addExpenses,
       updateExpense,
       removeExpense,
       upsertIncome,
-      addInvestment,
-      updateInvestment,
-      removeInvestment,
       upsertExchangeRate,
       customStreamingServices,
       addStreamingService,
@@ -153,16 +128,12 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
     [
       expenses,
       incomes,
-      investments,
       exchangeRates,
       addExpense,
       addExpenses,
       updateExpense,
       removeExpense,
       upsertIncome,
-      addInvestment,
-      updateInvestment,
-      removeInvestment,
       upsertExchangeRate,
       customStreamingServices,
       addStreamingService,
