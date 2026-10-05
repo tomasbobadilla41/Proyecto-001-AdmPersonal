@@ -11,6 +11,7 @@ import { UpdatePasswordView } from './pages/UpdatePasswordView'
 import { FinanceStoreProvider } from './hooks/useFinanceStore'
 import { ServicesStoreProvider } from './hooks/useServicesStore'
 import { RealEstateStoreProvider } from './hooks/useRealEstateStore'
+import { PortfolioStoreProvider } from './hooks/usePortfolioStore'
 import { ThemeProvider } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { Toaster } from './components/ui/sonner'
@@ -32,14 +33,16 @@ function AuthGate() {
     <FinanceStoreProvider>
       <ServicesStoreProvider>
         <RealEstateStoreProvider>
-          <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
-            {activeTab === 'dashboard' && <DashboardPage />}
-            {activeTab === 'gastos' && <ExpensesPage />}
-            {activeTab === 'inversiones' && <InvestmentsPage />}
-            {activeTab === 'pagos' && <PaymentsHubPage />}
-            {activeTab === 'inmuebles' && <RealEstateDashboardView />}
-            {activeTab === 'config' && <SettingsPage />}
-          </AppLayout>
+          <PortfolioStoreProvider>
+            <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
+              {activeTab === 'dashboard' && <DashboardPage />}
+              {activeTab === 'gastos' && <ExpensesPage />}
+              {activeTab === 'inversiones' && <InvestmentsPage />}
+              {activeTab === 'pagos' && <PaymentsHubPage />}
+              {activeTab === 'inmuebles' && <RealEstateDashboardView />}
+              {activeTab === 'config' && <SettingsPage />}
+            </AppLayout>
+          </PortfolioStoreProvider>
         </RealEstateStoreProvider>
       </ServicesStoreProvider>
     </FinanceStoreProvider>
