@@ -1,28 +1,12 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
-import type { ExchangeRate, Expense, Income } from '../types/finance'
+import type { ExchangeRate, Income } from '../types/finance'
 import { useLocalStorage } from './useLocalStorage'
 
 const STORAGE_KEYS = {
-  expenses: 'admpersonal:expenses',
   incomes: 'admpersonal:incomes',
   exchangeRates: 'admpersonal:exchangeRates',
   customStreamingServices: 'admpersonal:customStreamingServices',
 } as const
-
-/** `Expense.fecha` es un `Date`: hay que pasarlo por string para guardarlo en localStorage. */
-function serializeExpenses(expenses: Expense[]): string {
-  return JSON.stringify(expenses.map((e) => ({ ...e, fecha: e.fecha.toISOString() })))
-}
-
-function deserializeExpenses(raw: string): Expense[] {
-  const parsed = JSON.parse(raw) as Array<Omit<Expense, 'fecha'> & { fecha: string }>
-  return parsed.map((e) => ({ ...e, fecha: new Date(e.fecha) }))
-}
-
-/** Reemplaza el elemento con ese `id`, o lo deja igual si no lo encuentra. */
-function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
-  return items.map((item) => (item.id === updated.id ? updated : item))
-}
 
 /** Crea o reemplaza el registro de ese mes/año (un único registro por período). */
 function upsertByPeriod<T extends { mes: number; anio: number }>(items: T[], updated: T): T[] {
@@ -34,16 +18,8 @@ function upsertByPeriod<T extends { mes: number; anio: number }>(items: T[], upd
 }
 
 interface FinanceStore {
-  expenses: Expense[]
   incomes: Income[]
   exchangeRates: ExchangeRate[]
-  /** Agrega un gasto nuevo. */
-  addExpense: (expense: Expense) => void
-  /** Agrega varios gastos de una sola vez (ej: una carga recurrente de N meses) en un único update. */
-  addExpenses: (expenses: Expense[]) => void
-  /** Reemplaza un gasto existente (mismo `id`). */
-  updateExpense: (expense: Expense) => void
-  removeExpense: (id: string) => void
   /** Crea o reemplaza el Income de un mes/año (un registro por período). */
   upsertIncome: (income: Income) => void
   /** Crea o reemplaza la cotización del dólar de un mes/año. */
@@ -56,43 +32,15 @@ interface FinanceStore {
 const FinanceStoreContext = createContext<FinanceStore | null>(null)
 
 /**
- * Fuente única de verdad para gastos, ingresos, inversiones y cotizaciones,
- * persistida en `localStorage`. Se instancia una sola vez en la raíz de la
- * app (`App.tsx`) para que cualquier cambio (cargar/editar/borrar un gasto,
- * actualizar el precio de una inversión, setear la cotización del mes) se
- * refleje al instante en todo lo que consume `useFinanceStore` — sin
- * recargar la página — apenas React vuelve a renderizar.
- *
- * Si `localStorage` está vacío (primera vez que se abre la app), cada lista
- * arranca vacía: no se siembra con datos de ejemplo.
+ * Ingresos y cotizaciones, persistidos en `localStorage`. Los gastos viven en
+ * `useExpenseStore` (Supabase, no localStorage) — ver ese hook.
  */
 export function FinanceStoreProvider({ children }: { children: ReactNode }) {
-  const [expenses, setExpenses] = useLocalStorage<Expense[]>(STORAGE_KEYS.expenses, [], {
-    serialize: serializeExpenses,
-    deserialize: deserializeExpenses,
-  })
   const [incomes, setIncomes] = useLocalStorage<Income[]>(STORAGE_KEYS.incomes, [])
   const [exchangeRates, setExchangeRates] = useLocalStorage<ExchangeRate[]>(STORAGE_KEYS.exchangeRates, [])
   const [customStreamingServices, setCustomStreamingServices] = useLocalStorage<string[]>(
     STORAGE_KEYS.customStreamingServices,
     [],
-  )
-
-  const addExpense = useCallback(
-    (expense: Expense) => setExpenses((prev) => [...prev, expense]),
-    [setExpenses],
-  )
-  const addExpenses = useCallback(
-    (newExpenses: Expense[]) => setExpenses((prev) => [...prev, ...newExpenses]),
-    [setExpenses],
-  )
-  const updateExpense = useCallback(
-    (expense: Expense) => setExpenses((prev) => replaceById(prev, expense)),
-    [setExpenses],
-  )
-  const removeExpense = useCallback(
-    (id: string) => setExpenses((prev) => prev.filter((e) => e.id !== id)),
-    [setExpenses],
   )
 
   const upsertIncome = useCallback(
@@ -113,31 +61,14 @@ export function FinanceStoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<FinanceStore>(
     () => ({
-      expenses,
       incomes,
       exchangeRates,
-      addExpense,
-      addExpenses,
-      updateExpense,
-      removeExpense,
       upsertIncome,
       upsertExchangeRate,
       customStreamingServices,
       addStreamingService,
     }),
-    [
-      expenses,
-      incomes,
-      exchangeRates,
-      addExpense,
-      addExpenses,
-      updateExpense,
-      removeExpense,
-      upsertIncome,
-      upsertExchangeRate,
-      customStreamingServices,
-      addStreamingService,
-    ],
+    [incomes, exchangeRates, upsertIncome, upsertExchangeRate, customStreamingServices, addStreamingService],
   )
 
   return <FinanceStoreContext.Provider value={value}>{children}</FinanceStoreContext.Provider>
