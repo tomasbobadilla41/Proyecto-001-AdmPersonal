@@ -9,6 +9,7 @@ import { QuickPayList } from '../components/dashboard/QuickPayList'
 import { ActiveInstallmentsWidget } from '../components/dashboard/ActiveInstallmentsWidget'
 import { ExpenseBreakdownWidget } from '../components/dashboard/ExpenseBreakdownWidget'
 import { useFinanceStore } from '../hooks/useFinanceStore'
+import { useExpenseStore } from '../hooks/useExpenseStore'
 import { calculateActualSplit, calculateBudgetRule } from '../utils/budgetRule'
 import { calculateMonthlySummaries, getExchangeRate, getTrailingPeriods, MESES_LARGOS } from '../utils/finance'
 
@@ -16,7 +17,8 @@ import { calculateMonthlySummaries, getExchangeRate, getTrailingPeriods, MESES_L
 const MESES_A_MOSTRAR = 6
 
 export function DashboardPage() {
-  const { expenses, incomes, exchangeRates, upsertIncome, upsertExchangeRate } = useFinanceStore()
+  const { incomes, exchangeRates, upsertIncome, upsertExchangeRate } = useFinanceStore()
+  const { expenses } = useExpenseStore()
 
   const periodos = useMemo(() => getTrailingPeriods(MESES_A_MOSTRAR), [])
   const summaries = useMemo(

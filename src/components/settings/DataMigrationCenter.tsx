@@ -3,7 +3,7 @@ import { Download, FileSpreadsheet, FileText, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useFinanceStore } from '../../hooks/useFinanceStore'
+import { useExpenseStore } from '../../hooks/useExpenseStore'
 import {
   downloadExpenseCsvTemplate,
   exportExpensesToCsv,
@@ -15,7 +15,7 @@ import {
 const MAX_ERROR_MESSAGES = 4
 
 export function DataMigrationCenter() {
-  const { expenses, addExpenses } = useFinanceStore()
+  const { expenses, addExpenses } = useExpenseStore()
   const [isDragging, setIsDragging] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -54,18 +54,20 @@ export function DataMigrationCenter() {
     try {
       const { expenses: imported, errors } = await importExpensesFromCsv(file)
 
-      if (imported.length > 0) {
-        addExpenses(imported)
+      if (imported.length === 0) {
+        toast.error(`No se pudo importar ningún gasto. ${summarizeErrors(errors)}`)
+        return
       }
 
-      if (imported.length > 0 && errors.length === 0) {
+      const saved = await addExpenses(imported)
+      if (!saved) return // el store ya mostró su propio toast de error
+
+      if (errors.length === 0) {
         toast.success(`Se importaron ${imported.length} gastos correctamente.`)
-      } else if (imported.length > 0 && errors.length > 0) {
+      } else {
         toast.error(
           `Se importaron ${imported.length} gastos. ${errors.length} fila(s) omitida(s): ${summarizeErrors(errors)}`,
         )
-      } else {
-        toast.error(`No se pudo importar ningún gasto. ${summarizeErrors(errors)}`)
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ocurrió un error al leer el archivo.')

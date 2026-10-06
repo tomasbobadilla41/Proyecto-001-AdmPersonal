@@ -140,6 +140,18 @@ export function todayISODate(): string {
 }
 
 /**
+ * `fecha` en formato 'YYYY-MM-DD' usando getters UTC (coherente con cómo se
+ * interpretan las fechas en toda la app — ver `todayISODate`). Para mandarle
+ * la columna `date` a Supabase.
+ */
+export function toDateOnlyUTC(date: Date): string {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * Suma `months` meses a una fecha en UTC, cambiando de año si corresponde
  * (API nativa de `Date`, sin `date-fns`: `Date.UTC` normaliza un mes fuera
  * de [0,11] corriendo el año solo). Si el día no existe en el mes de

@@ -8,13 +8,15 @@ import { ExpensesByTypeChart } from '../components/expenses/ExpensesByTypeChart'
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { useFinanceStore } from '../hooks/useFinanceStore'
+import { useExpenseStore } from '../hooks/useExpenseStore'
 import { formatMoney } from '../utils/currency'
 import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finance'
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 
 export function ExpensesPage() {
-  const { expenses, exchangeRates, addExpenses, updateExpense, removeExpense } = useFinanceStore()
+  const { exchangeRates } = useFinanceStore()
+  const { expenses, isLoading, addExpenses, updateExpense, removeExpense } = useExpenseStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
 
   // Arranca en el mes calendario real de hoy — igual que el Dashboard —, no
@@ -38,15 +40,15 @@ export function ExpensesPage() {
 
   function handleDelete(expense: Expense) {
     if (window.confirm(`¿Eliminar el gasto "${expense.descripcion}"?`)) {
-      removeExpense(expense.id)
+      void removeExpense(expense.id)
     }
   }
 
   function handleSubmit(expenses: Expense[]) {
     if (formState?.mode === 'edit') {
-      updateExpense(expenses[0])
+      void updateExpense(expenses[0])
     } else {
-      addExpenses(expenses)
+      void addExpenses(expenses)
     }
     setFormState(null)
   }
@@ -75,7 +77,14 @@ export function ExpensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {filteredExpenses.map((expense) => (
+              {isLoading && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-faint">
+                    Cargando gastos…
+                  </td>
+                </tr>
+              )}
+              {!isLoading && filteredExpenses.map((expense) => (
                 <tr key={expense.id} className="text-ink-soft">
                   <td className="whitespace-nowrap px-4 py-3 text-muted">
                     {formatDateAR(expense.fecha)}
@@ -117,7 +126,7 @@ export function ExpensesPage() {
                   </td>
                 </tr>
               ))}
-              {filteredExpenses.length === 0 && (
+              {!isLoading && filteredExpenses.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-faint">
                     No hay gastos cargados para este período.

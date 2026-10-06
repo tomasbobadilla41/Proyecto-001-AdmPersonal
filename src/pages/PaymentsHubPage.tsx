@@ -6,13 +6,13 @@ import { ServiceConfigFormDrawer } from '../components/payments/ServiceConfigFor
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { useServicesStore } from '../hooks/useServicesStore'
-import { useFinanceStore } from '../hooks/useFinanceStore'
+import { useExpenseStore } from '../hooks/useExpenseStore'
 
 type ServiceFormState = { mode: 'create' } | { mode: 'edit'; service: ServiceConfig } | null
 
 export function PaymentsHubPage() {
   const { services, addService, updateService, removeService } = useServicesStore()
-  const { addExpenses } = useFinanceStore()
+  const { addExpenses } = useExpenseStore()
 
   const [formState, setFormState] = useState<ServiceFormState>(null)
   // Servicio para el que se está registrando un pago (abre el drawer de Gasto pre-completado).
@@ -34,7 +34,7 @@ export function PaymentsHubPage() {
   }
 
   function handleSubmitExpense(expenses: Expense[]) {
-    addExpenses(expenses)
+    void addExpenses(expenses)
     setPayingService(null)
   }
 
