@@ -10,7 +10,7 @@ import { formatMoney } from '../../utils/currency'
 import { aggregateHoldingsByTicker, calculateQuantity, formatQuantity } from '../../utils/portfolio'
 
 export function CedearTab() {
-  const { holdings, addHolding, removeHolding } = usePortfolioStore()
+  const { holdings, isLoading, addHolding, removeHolding } = usePortfolioStore()
   const [ticker, setTicker] = useState('')
   const [quantity, setQuantity] = useState('')
   const [purchasePrice, setPurchasePrice] = useState('')
@@ -21,11 +21,11 @@ export function CedearTab() {
   const priceNumber = Number(purchasePrice) || 0
   const previewTotal = quantityNumber * priceNumber
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!ticker || quantityNumber <= 0 || priceNumber <= 0) return
 
-    addHolding({
+    const saved = await addHolding({
       id: `cedear-${Date.now()}`,
       assetType: 'cedear',
       ticker,
@@ -36,16 +36,18 @@ export function CedearTab() {
       date: new Date().toISOString(),
     })
 
-    setTicker('')
-    setQuantity('')
-    setPurchasePrice('')
+    if (saved) {
+      setTicker('')
+      setQuantity('')
+      setPurchasePrice('')
+    }
   }
 
   function handleDeletePosition(tickerToRemove: string) {
     if (!window.confirm(`¿Eliminar todas las compras de "${tickerToRemove}"?`)) return
     holdings
       .filter((h) => h.assetType === 'cedear' && h.ticker === tickerToRemove)
-      .forEach((h) => removeHolding(h.id))
+      .forEach((h) => void removeHolding(h.id))
   }
 
   return (
@@ -112,7 +114,14 @@ export function CedearTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {positions.map((position) => (
+            {isLoading && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-faint">
+                  Cargando inversiones…
+                </td>
+              </tr>
+            )}
+            {!isLoading && positions.map((position) => (
               <tr key={position.ticker} className="text-ink-soft">
                 <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">{position.ticker}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">{formatQuantity(position.quantity)}</td>
@@ -134,7 +143,7 @@ export function CedearTab() {
                 </td>
               </tr>
             ))}
-            {positions.length === 0 && (
+            {!isLoading && positions.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-faint">
                   Todavía no registraste ninguna compra de CEDEARs.

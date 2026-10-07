@@ -12,7 +12,7 @@ import { formatMoney } from '../../utils/currency'
 import { calculateQuantity, formatPnlPercentage, formatQuantity, getHoldingPnl } from '../../utils/portfolio'
 
 export function CryptoTab() {
-  const { holdings, addHolding, removeHolding } = usePortfolioStore()
+  const { holdings, isLoading, addHolding, removeHolding } = usePortfolioStore()
   const [ticker, setTicker] = useState('')
   const [amountInvested, setAmountInvested] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,7 +32,7 @@ export function CryptoTab() {
     try {
       const purchasePrice = await fetchBinancePrice(tickerLimpio)
 
-      addHolding({
+      const saved = await addHolding({
         id: `crypto-${Date.now()}`,
         assetType: 'crypto',
         ticker: tickerLimpio,
@@ -43,8 +43,10 @@ export function CryptoTab() {
         date: new Date().toISOString(),
       })
 
-      setTicker('')
-      setAmountInvested('')
+      if (saved) {
+        setTicker('')
+        setAmountInvested('')
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'No se pudo obtener el precio de Binance.',
@@ -56,7 +58,7 @@ export function CryptoTab() {
 
   function handleDelete(id: string) {
     if (window.confirm('¿Eliminar este registro de compra?')) {
-      removeHolding(id)
+      void removeHolding(id)
     }
   }
 
@@ -119,7 +121,14 @@ export function CryptoTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {cryptoHoldings.map((holding) => {
+            {isLoading && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-faint">
+                  Cargando inversiones…
+                </td>
+              </tr>
+            )}
+            {!isLoading && cryptoHoldings.map((holding) => {
               const livePrice = livePrices[holding.ticker]
               const currentValue = livePrice !== undefined ? holding.quantity * livePrice : null
               const pnl = currentValue !== null ? getHoldingPnl(holding.amountInvested, currentValue) : null
@@ -161,7 +170,7 @@ export function CryptoTab() {
                 </tr>
               )
             })}
-            {cryptoHoldings.length === 0 && (
+            {!isLoading && cryptoHoldings.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-faint">
                   Todavía no registraste ninguna compra de criptomonedas.
