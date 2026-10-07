@@ -7,7 +7,7 @@ import { MonthYearSelector } from '../components/expenses/MonthYearSelector'
 import { ExpensesByTypeChart } from '../components/expenses/ExpensesByTypeChart'
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
-import { useFinanceStore } from '../hooks/useFinanceStore'
+import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
 import { formatMoney } from '../utils/currency'
 import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finance'
@@ -15,7 +15,7 @@ import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finan
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 
 export function ExpensesPage() {
-  const { exchangeRates } = useFinanceStore()
+  const { exchangeRates } = useExchangeRateStore()
   const { expenses, isLoading, addExpenses, updateExpense, removeExpense } = useExpenseStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
 

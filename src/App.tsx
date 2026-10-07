@@ -10,6 +10,8 @@ import { AuthView } from './pages/AuthView'
 import { UpdatePasswordView } from './pages/UpdatePasswordView'
 import { FinanceStoreProvider } from './hooks/useFinanceStore'
 import { ExpenseStoreProvider } from './hooks/useExpenseStore'
+import { IncomeStoreProvider } from './hooks/useIncomeStore'
+import { ExchangeRateStoreProvider } from './hooks/useExchangeRateStore'
 import { ServicesStoreProvider } from './hooks/useServicesStore'
 import { RealEstateStoreProvider } from './hooks/useRealEstateStore'
 import { PortfolioStoreProvider } from './hooks/usePortfolioStore'
@@ -33,20 +35,24 @@ function AuthGate() {
   return (
     <FinanceStoreProvider>
       <ExpenseStoreProvider>
-        <ServicesStoreProvider>
-          <RealEstateStoreProvider>
-            <PortfolioStoreProvider>
-              <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
-                {activeTab === 'dashboard' && <DashboardPage />}
-                {activeTab === 'gastos' && <ExpensesPage />}
-                {activeTab === 'inversiones' && <InvestmentsPage />}
-                {activeTab === 'pagos' && <PaymentsHubPage />}
-                {activeTab === 'inmuebles' && <RealEstateDashboardView />}
-                {activeTab === 'config' && <SettingsPage />}
-              </AppLayout>
-            </PortfolioStoreProvider>
-          </RealEstateStoreProvider>
-        </ServicesStoreProvider>
+        <IncomeStoreProvider>
+          <ExchangeRateStoreProvider>
+            <ServicesStoreProvider>
+              <RealEstateStoreProvider>
+                <PortfolioStoreProvider>
+                  <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
+                    {activeTab === 'dashboard' && <DashboardPage />}
+                    {activeTab === 'gastos' && <ExpensesPage />}
+                    {activeTab === 'inversiones' && <InvestmentsPage />}
+                    {activeTab === 'pagos' && <PaymentsHubPage />}
+                    {activeTab === 'inmuebles' && <RealEstateDashboardView />}
+                    {activeTab === 'config' && <SettingsPage />}
+                  </AppLayout>
+                </PortfolioStoreProvider>
+              </RealEstateStoreProvider>
+            </ServicesStoreProvider>
+          </ExchangeRateStoreProvider>
+        </IncomeStoreProvider>
       </ExpenseStoreProvider>
     </FinanceStoreProvider>
   )
