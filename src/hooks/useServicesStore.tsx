@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { toast } from 'sonner'
 import type { ServiceConfig } from '../types/finance'
-import { useLocalStorage } from './useLocalStorage'
-
-const SERVICES_STORAGE_KEY = 'admpersonal:services'
+import { useAuth } from './useAuth'
+import { deleteServiceRow, fetchServices, insertService, updateServiceRow } from '../services/paymentServicesApi'
 
 /** Reemplaza el elemento con ese `id`, o lo deja igual si no lo encuentra. */
 function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
@@ -11,45 +11,99 @@ function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
 
 interface ServicesStore {
   services: ServiceConfig[]
-  /** Agrega un servicio nuevo al directorio. */
-  addService: (service: ServiceConfig) => void
+  isLoading: boolean
+  /** Agrega un servicio nuevo al directorio. Devuelve `false` si falló (ya mostró su propio toast). */
+  addService: (service: ServiceConfig) => Promise<boolean>
   /** Reemplaza un servicio existente (mismo `id`). */
-  updateService: (service: ServiceConfig) => void
-  removeService: (id: string) => void
+  updateService: (service: ServiceConfig) => Promise<boolean>
+  removeService: (id: string) => Promise<boolean>
 }
 
 const ServicesStoreContext = createContext<ServicesStore | null>(null)
 
 /**
  * Directorio de servicios (nro de cliente/CBU + link de pago para cada
- * gasto fijo), persistido en `localStorage`. Mismo patrón que
- * `useFinanceStore`: se instancia una sola vez en la raíz de la app
- * (`App.tsx`) para que cualquier alta/edición/borrado se refleje al
- * instante en todo lo que consuma `useServicesStore` — sin recargar la
- * página — apenas React vuelve a renderizar.
- *
- * Si `localStorage` está vacío (primera vez que se abre la app), el
- * directorio arranca vacío: no se siembra con datos de ejemplo.
+ * gasto fijo) del usuario activo, persistido en Supabase (tabla
+ * `payment_services`, con RLS por `user_id`).
  */
 export function ServicesStoreProvider({ children }: { children: ReactNode }) {
-  const [services, setServices] = useLocalStorage<ServiceConfig[]>(SERVICES_STORAGE_KEY, [])
+  const { session } = useAuth()
+  const userId = session?.user.id
+
+  const [services, setServices] = useState<ServiceConfig[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId) {
+      setServices([])
+      setIsLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setIsLoading(true)
+
+    fetchServices(userId)
+      .then((data) => {
+        if (!cancelled) setServices(data)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        toast.error(error instanceof Error ? error.message : 'No se pudo cargar el directorio de servicios.')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   const addService = useCallback(
-    (service: ServiceConfig) => setServices((prev) => [...prev, service]),
-    [setServices],
-  )
-  const updateService = useCallback(
-    (service: ServiceConfig) => setServices((prev) => replaceById(prev, service)),
-    [setServices],
-  )
-  const removeService = useCallback(
-    (id: string) => setServices((prev) => prev.filter((s) => s.id !== id)),
-    [setServices],
+    async (service: ServiceConfig) => {
+      if (!userId) return false
+      try {
+        const inserted = await insertService(service, userId)
+        setServices((prev) => [...prev, inserted])
+        return true
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'No se pudo guardar el servicio.')
+        return false
+      }
+    },
+    [userId],
   )
 
+  const updateService = useCallback(
+    async (service: ServiceConfig) => {
+      if (!userId) return false
+      try {
+        const updated = await updateServiceRow(service, userId)
+        setServices((prev) => replaceById(prev, updated))
+        return true
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el servicio.')
+        return false
+      }
+    },
+    [userId],
+  )
+
+  const removeService = useCallback(async (id: string) => {
+    try {
+      await deleteServiceRow(id)
+      setServices((prev) => prev.filter((s) => s.id !== id))
+      return true
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el servicio.')
+      return false
+    }
+  }, [])
+
   const value = useMemo<ServicesStore>(
-    () => ({ services, addService, updateService, removeService }),
-    [services, addService, updateService, removeService],
+    () => ({ services, isLoading, addService, updateService, removeService }),
+    [services, isLoading, addService, updateService, removeService],
   )
 
   return <ServicesStoreContext.Provider value={value}>{children}</ServicesStoreContext.Provider>
