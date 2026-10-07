@@ -11,7 +11,7 @@ import { useExpenseStore } from '../hooks/useExpenseStore'
 type ServiceFormState = { mode: 'create' } | { mode: 'edit'; service: ServiceConfig } | null
 
 export function PaymentsHubPage() {
-  const { services, addService, updateService, removeService } = useServicesStore()
+  const { services, isLoading, addService, updateService, removeService } = useServicesStore()
   const { addExpenses } = useExpenseStore()
 
   const [formState, setFormState] = useState<ServiceFormState>(null)
@@ -20,15 +20,15 @@ export function PaymentsHubPage() {
 
   function handleDelete(service: ServiceConfig) {
     if (window.confirm(`¿Eliminar el servicio "${service.category}" del directorio?`)) {
-      removeService(service.id)
+      void removeService(service.id)
     }
   }
 
   function handleSubmitService(service: ServiceConfig) {
     if (formState?.mode === 'edit') {
-      updateService(service)
+      void updateService(service)
     } else {
-      addService(service)
+      void addService(service)
     }
     setFormState(null)
   }
@@ -45,7 +45,11 @@ export function PaymentsHubPage() {
         <p className="text-sm text-muted">Directorio de servicios para pagar tus gastos fijos</p>
       </div>
 
-      {services.length === 0 ? (
+      {isLoading ? (
+        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
+          Cargando servicios…
+        </div>
+      ) : services.length === 0 ? (
         <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
           Todavía no configuraste ningún servicio.
         </div>
