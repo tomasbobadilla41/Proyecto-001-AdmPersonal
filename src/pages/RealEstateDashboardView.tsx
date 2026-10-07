@@ -6,14 +6,14 @@ import { PropertyCard } from '../components/realestate/PropertyCard'
 import { PropertyFormDrawer } from '../components/realestate/PropertyFormDrawer'
 import { PropertyDetailView } from './PropertyDetailView'
 import { useRealEstateStore } from '../hooks/useRealEstateStore'
-import { useFinanceStore } from '../hooks/useFinanceStore'
+import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { formatMoney } from '../utils/currency'
 import { getExchangeRate } from '../utils/finance'
 import { sumPropertyExpenses, sumPropertyIncomes } from '../utils/realEstate'
 
 export function RealEstateDashboardView() {
   const { properties, expenses, incomes, addProperty } = useRealEstateStore()
-  const { exchangeRates } = useFinanceStore()
+  const { exchangeRates } = useExchangeRateStore()
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null)
   const [isAddingProperty, setIsAddingProperty] = useState(false)

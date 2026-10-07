@@ -8,8 +8,9 @@ import { IncomeExpenseChart } from '../components/dashboard/IncomeExpenseChart'
 import { QuickPayList } from '../components/dashboard/QuickPayList'
 import { ActiveInstallmentsWidget } from '../components/dashboard/ActiveInstallmentsWidget'
 import { ExpenseBreakdownWidget } from '../components/dashboard/ExpenseBreakdownWidget'
-import { useFinanceStore } from '../hooks/useFinanceStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
+import { useIncomeStore } from '../hooks/useIncomeStore'
+import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { calculateActualSplit, calculateBudgetRule } from '../utils/budgetRule'
 import { calculateMonthlySummaries, getExchangeRate, getTrailingPeriods, MESES_LARGOS } from '../utils/finance'
 
@@ -17,8 +18,9 @@ import { calculateMonthlySummaries, getExchangeRate, getTrailingPeriods, MESES_L
 const MESES_A_MOSTRAR = 6
 
 export function DashboardPage() {
-  const { incomes, exchangeRates, upsertIncome, upsertExchangeRate } = useFinanceStore()
   const { expenses } = useExpenseStore()
+  const { incomes, upsertIncome } = useIncomeStore()
+  const { exchangeRates, upsertExchangeRate } = useExchangeRateStore()
 
   const periodos = useMemo(() => getTrailingPeriods(MESES_A_MOSTRAR), [])
   const summaries = useMemo(
@@ -53,7 +55,7 @@ export function DashboardPage() {
   )
 
   function handleSaveExchangeRate(valor: number) {
-    upsertExchangeRate({
+    void upsertExchangeRate({
       id: `xr-${current.anio}-${String(current.mes).padStart(2, '0')}`,
       mes: current.mes,
       anio: current.anio,
