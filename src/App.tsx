@@ -8,7 +8,7 @@ import { RealEstateDashboardView } from './pages/RealEstateDashboardView'
 import { SettingsPage } from './pages/SettingsPage'
 import { AuthView } from './pages/AuthView'
 import { UpdatePasswordView } from './pages/UpdatePasswordView'
-import { FinanceStoreProvider } from './hooks/useFinanceStore'
+import { StreamingServicesStoreProvider } from './hooks/useStreamingServicesStore'
 import { ExpenseStoreProvider } from './hooks/useExpenseStore'
 import { IncomeStoreProvider } from './hooks/useIncomeStore'
 import { ExchangeRateStoreProvider } from './hooks/useExchangeRateStore'
@@ -33,7 +33,7 @@ function AuthGate() {
   }
 
   return (
-    <FinanceStoreProvider>
+    <StreamingServicesStoreProvider>
       <ExpenseStoreProvider>
         <IncomeStoreProvider>
           <ExchangeRateStoreProvider>
@@ -54,7 +54,7 @@ function AuthGate() {
           </ExchangeRateStoreProvider>
         </IncomeStoreProvider>
       </ExpenseStoreProvider>
-    </FinanceStoreProvider>
+    </StreamingServicesStoreProvider>
   )
 }
 

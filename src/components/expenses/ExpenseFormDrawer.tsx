@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from '
 import { X } from 'lucide-react'
 import { EXPENSE_CATEGORIES, type Expense, type ExpenseCategory, type ExpenseType } from '../../types/finance'
 import type { Currency } from '../../types/money'
-import { useFinanceStore } from '../../hooks/useFinanceStore'
+import { useStreamingServicesStore } from '../../hooks/useStreamingServicesStore'
 import { addMonthsUTC, todayISODate } from '../../utils/finance'
 import { DEFAULT_STREAMING_SERVICES } from '../../utils/streamingServices'
 import { StreamingServiceField } from './StreamingServiceField'
@@ -39,7 +39,7 @@ function toDateInputValue(date: Date): string {
 
 export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, prefill }: ExpenseFormDrawerProps) {
   const isEditMode = Boolean(initialExpense)
-  const { customStreamingServices, addStreamingService } = useFinanceStore()
+  const { customStreamingServices, addStreamingService } = useStreamingServicesStore()
 
   const [monto, setMonto] = useState('')
   const [moneda, setMoneda] = useState<Currency>('ARS')
