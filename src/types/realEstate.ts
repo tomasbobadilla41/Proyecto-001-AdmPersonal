@@ -28,9 +28,11 @@ export interface PropertyExpense {
   /**
    * FK a `PropertyServiceConfig.id` — es la relación "viva": si el servicio
    * se renombra, este gasto sigue encontrándolo. Usar esto para relacionar,
-   * no `serviceName`.
+   * no `serviceName`. `null` si el servicio original se borró (en la base,
+   * la FK es `ON DELETE SET NULL`) — el gasto sobrevive con su snapshot de
+   * `serviceName`.
    */
-  serviceConfigId: string
+  serviceConfigId: string | null
   /**
    * Snapshot del nombre del servicio al momento de guardar este gasto (no
    * necesariamente el nombre actual). Se conserva aunque el

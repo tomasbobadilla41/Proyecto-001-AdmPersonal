@@ -98,50 +98,50 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
         : `¿Eliminar la propiedad "${property.name}"?`
 
     if (window.confirm(message)) {
-      removePropertyCascade(property.id)
+      void removePropertyCascade(property.id)
       onBack()
     }
   }
 
   function handleSubmitService(config: PropertyServiceConfig) {
-    if (serviceFormState?.mode === 'edit') updateServiceConfig(config)
-    else addServiceConfig(config)
+    if (serviceFormState?.mode === 'edit') void updateServiceConfig(config)
+    else void addServiceConfig(config)
     setServiceFormState(null)
   }
 
   function handleDeleteService(config: PropertyServiceConfig) {
     if (window.confirm(`¿Eliminar el servicio "${config.serviceName}"?`)) {
-      removeServiceConfig(config.id)
+      void removeServiceConfig(config.id)
     }
   }
 
   function handleSaveExpense(expense: PropertyExpense) {
     const exists = expenses.some((e) => e.id === expense.id)
-    if (exists) updateExpense(expense)
-    else addExpense(expense)
+    if (exists) void updateExpense(expense)
+    else void addExpense(expense)
   }
 
   function handleSaveIncome(income: PropertyIncome) {
     const exists = incomes.some((i) => i.id === income.id)
-    if (exists) updateIncome(income)
-    else addIncome(income)
+    if (exists) void updateIncome(income)
+    else void addIncome(income)
   }
 
   function handleSubmitContract(contract: LeaseContract) {
-    if (contractFormState?.mode === 'edit') updateContract(contract)
-    else addContract(contract)
+    if (contractFormState?.mode === 'edit') void updateContract(contract)
+    else void addContract(contract)
     setContractFormState(null)
   }
 
   function handleDeleteContract(contract: LeaseContract) {
     if (window.confirm(`¿Eliminar el contrato de "${contract.tenantName}"?`)) {
-      removeContract(contract.id)
+      void removeContract(contract.id)
     }
   }
 
   function handleSaveRentUpdate(newAmount: number) {
     if (!activeContract) return
-    updateContract({ ...activeContract, currentRentAmount: newAmount })
+    void updateContract({ ...activeContract, currentRentAmount: newAmount })
   }
 
   return (

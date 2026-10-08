@@ -12,7 +12,7 @@ import { getExchangeRate } from '../utils/finance'
 import { sumPropertyExpenses, sumPropertyIncomes } from '../utils/realEstate'
 
 export function RealEstateDashboardView() {
-  const { properties, expenses, incomes, addProperty } = useRealEstateStore()
+  const { properties, expenses, incomes, isLoading, addProperty } = useRealEstateStore()
   const { exchangeRates } = useExchangeRateStore()
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null)
@@ -55,7 +55,11 @@ export function RealEstateDashboardView() {
         </StatCard>
       </div>
 
-      {properties.length === 0 ? (
+      {isLoading ? (
+        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
+          Cargando propiedades…
+        </div>
+      ) : properties.length === 0 ? (
         <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
           Todavía no agregaste ninguna propiedad.
         </div>
