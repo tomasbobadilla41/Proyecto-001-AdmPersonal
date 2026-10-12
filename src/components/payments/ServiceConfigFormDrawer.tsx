@@ -23,21 +23,30 @@ export function ServiceConfigFormDrawer({
 }: ServiceConfigFormDrawerProps) {
   const isEditMode = Boolean(initialService)
 
+  const [title, setTitle] = useState('')
   const [category, setCategory] = useState<FixedExpenseCategory>(DEFAULT_CATEGORY)
   const [accountNumber, setAccountNumber] = useState('')
   const [paymentLink, setPaymentLink] = useState('')
+  const [senderEmail, setSenderEmail] = useState('')
+  const [dueDay, setDueDay] = useState('')
 
   // Recarga los campos cada vez que se abre el panel (configurando o editando).
   useEffect(() => {
     if (!isOpen) return
     if (initialService) {
+      setTitle(initialService.title)
       setCategory(initialService.category)
-      setAccountNumber(initialService.accountNumber)
-      setPaymentLink(initialService.paymentLink)
+      setAccountNumber(initialService.accountNumber ?? '')
+      setPaymentLink(initialService.paymentLink ?? '')
+      setSenderEmail(initialService.senderEmail ?? '')
+      setDueDay(initialService.dueDay ? String(initialService.dueDay) : '')
     } else {
+      setTitle('')
       setCategory(DEFAULT_CATEGORY)
       setAccountNumber('')
       setPaymentLink('')
+      setSenderEmail('')
+      setDueDay('')
     }
   }, [isOpen, initialService])
 
@@ -45,13 +54,18 @@ export function ServiceConfigFormDrawer({
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!accountNumber.trim() || !paymentLink.trim()) return
+    if (!title.trim()) return
+
+    const parsedDueDay = Number(dueDay)
 
     onSubmit({
       id: initialService?.id ?? `svc-${Date.now()}`,
+      title: title.trim(),
       category,
-      accountNumber: accountNumber.trim(),
-      paymentLink: paymentLink.trim(),
+      accountNumber: accountNumber.trim() || undefined,
+      paymentLink: paymentLink.trim() || undefined,
+      senderEmail: senderEmail.trim() || undefined,
+      dueDay: dueDay && parsedDueDay >= 1 && parsedDueDay <= 31 ? parsedDueDay : undefined,
     })
     onClose()
   }
@@ -75,6 +89,18 @@ export function ServiceConfigFormDrawer({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm text-ink-soft">
+            Nombre del servicio
+            <input
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ej: Edenor - Luz casa"
+              className={INPUT_CLASSNAME}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Categoría
             <select
               value={category}
@@ -90,10 +116,23 @@ export function ServiceConfigFormDrawer({
           </label>
 
           <label className="flex flex-col gap-1 text-sm text-ink-soft">
+            Día de vencimiento
+            <input
+              type="number"
+              min="1"
+              max="31"
+              step="1"
+              value={dueDay}
+              onChange={(e) => setDueDay(e.target.value)}
+              placeholder="Ej: 10"
+              className={INPUT_CLASSNAME}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
             Nro. de cuenta / cliente
             <input
               type="text"
-              required
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
               placeholder="Ej: 123456789 o CBU"
@@ -105,12 +144,23 @@ export function ServiceConfigFormDrawer({
             Link de pago
             <input
               type="url"
-              required
               value={paymentLink}
               onChange={(e) => setPaymentLink(e.target.value)}
               placeholder="https://..."
               className={INPUT_CLASSNAME}
             />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-ink-soft">
+            Email de facturación
+            <input
+              type="email"
+              value={senderEmail}
+              onChange={(e) => setSenderEmail(e.target.value)}
+              placeholder="facturas@proveedor.com"
+              className={INPUT_CLASSNAME}
+            />
+            <span className="text-xs text-faint">Casilla desde la que llega la factura (uso futuro).</span>
           </label>
 
           <button
