@@ -14,6 +14,7 @@ interface ExpenseRow {
   currency: Currency
   subcategory: string | null
   recurring_group_id: string | null
+  service_id: string | null
 }
 
 function rowToExpense(row: ExpenseRow): Expense {
@@ -27,6 +28,7 @@ function rowToExpense(row: ExpenseRow): Expense {
     category: row.category,
     subcategoria: row.subcategory ?? undefined,
     recurringGroupId: row.recurring_group_id ?? undefined,
+    serviceId: row.service_id ?? undefined,
   }
 }
 
@@ -42,6 +44,7 @@ function expenseToInsertRow(expense: Expense, userId: string) {
     currency: expense.moneda,
     subcategory: expense.subcategoria ?? null,
     recurring_group_id: expense.recurringGroupId ?? null,
+    service_id: expense.serviceId ?? null,
   }
 }
 

@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
-import type { Expense, ServiceConfig } from '../types/finance'
+import type { ServiceConfig } from '../types/finance'
 import { ServiceConfigCard } from '../components/payments/ServiceConfigCard'
 import { ServiceConfigFormDrawer } from '../components/payments/ServiceConfigFormDrawer'
-import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
+import { RegisterPaymentModal } from '../components/payments/RegisterPaymentModal'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { useServicesStore } from '../hooks/useServicesStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
@@ -12,14 +12,26 @@ type ServiceFormState = { mode: 'create' } | { mode: 'edit'; service: ServiceCon
 
 export function PaymentsHubPage() {
   const { services, isLoading, addService, updateService, removeService } = useServicesStore()
-  const { addExpenses } = useExpenseStore()
+  const { expenses, addExpenses } = useExpenseStore()
 
   const [formState, setFormState] = useState<ServiceFormState>(null)
-  // Servicio para el que se está registrando un pago (abre el drawer de Gasto pre-completado).
+  // Servicio para el que se está registrando un pago (abre el modal chico de monto).
   const [payingService, setPayingService] = useState<ServiceConfig | null>(null)
 
+  // `service_id`s con al menos un gasto cargado en el mes/año en curso — define el semáforo de cada tarjeta.
+  const paidServiceIdsThisMonth = useMemo(() => {
+    const now = new Date()
+    const mes = now.getMonth()
+    const anio = now.getFullYear()
+    return new Set(
+      expenses
+        .filter((e) => e.serviceId && e.fecha.getUTCMonth() === mes && e.fecha.getUTCFullYear() === anio)
+        .map((e) => e.serviceId as string),
+    )
+  }, [expenses])
+
   function handleDelete(service: ServiceConfig) {
-    if (window.confirm(`¿Eliminar el servicio "${service.category}" del directorio?`)) {
+    if (window.confirm(`¿Eliminar el servicio "${service.title}" del directorio?`)) {
       void removeService(service.id)
     }
   }
@@ -31,11 +43,6 @@ export function PaymentsHubPage() {
       void addService(service)
     }
     setFormState(null)
-  }
-
-  function handleSubmitExpense(expenses: Expense[]) {
-    void addExpenses(expenses)
-    setPayingService(null)
   }
 
   return (
@@ -59,6 +66,7 @@ export function PaymentsHubPage() {
             <ServiceConfigCard
               key={service.id}
               service={service}
+              isPaidThisMonth={paidServiceIdsThisMonth.has(service.id)}
               onEdit={() => setFormState({ mode: 'edit', service })}
               onDelete={() => handleDelete(service)}
               onRegisterPayment={() => setPayingService(service)}
@@ -80,11 +88,13 @@ export function PaymentsHubPage() {
         initialService={formState?.mode === 'edit' ? formState.service : undefined}
       />
 
-      <ExpenseFormDrawer
-        isOpen={payingService !== null}
+      <RegisterPaymentModal
+        service={payingService}
         onClose={() => setPayingService(null)}
-        onSubmit={handleSubmitExpense}
-        prefill={payingService ? { category: payingService.category, expenseType: 'FIJO' } : undefined}
+        onSubmit={(expense) => {
+          void addExpenses([expense])
+          setPayingService(null)
+        }}
       />
     </div>
   )

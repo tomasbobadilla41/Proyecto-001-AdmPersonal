@@ -50,6 +50,8 @@ export interface Expense {
    * un gasto recurrente de una sola vez.
    */
   recurringGroupId?: string
+  /** Si este gasto corresponde a un pago registrado desde el Centro de Pagos, el `id` de ese `ServiceConfig`. */
+  serviceId?: string
 }
 
 export interface Income {
@@ -95,17 +97,24 @@ export interface PortfolioHolding {
 }
 
 /**
- * Configuración de pago de un servicio fijo (ej: Edenor, Expensas), para el
- * Directorio de Servicios. `category` queda acotado a las subcategorías de
- * Gastos Fijos (`FixedExpenseCategory`), no a cualquier `ExpenseCategory`.
+ * Catálogo de un servicio fijo (ej: Edenor, Expensas) para el Centro de
+ * Pagos. `category` queda acotado a las subcategorías de Gastos Fijos
+ * (`FixedExpenseCategory`), no a cualquier `ExpenseCategory`. Separado de
+ * los pagos mensuales en sí, que viven como `Expense` (con `serviceId`).
  */
 export interface ServiceConfig {
   id: string
+  /** Nombre propio del servicio (ej: "Edenor - Luz casa"), distinto de `category`. */
+  title: string
   category: FixedExpenseCategory
   /** Nro de cliente, CBU, o el identificador que pida ese servicio para pagar. */
-  accountNumber: string
+  accountNumber?: string
   /** URL de pago (home banking, billetera, sitio del proveedor, etc.). */
-  paymentLink: string
+  paymentLink?: string
+  /** Casilla desde la que llegan las facturas — para la futura lectura automática por email. */
+  senderEmail?: string
+  /** Día del mes (1-31) en que vence el pago. */
+  dueDay?: number
 }
 
 /** Resumen mensual calculado a partir de Income + Expense (+ tipo de cambio estimado). */

@@ -32,3 +32,15 @@ src/
   store/        # Lógica de estado global y persistencia
   types/        # Tipos e interfaces de TypeScript compartidos
   utils/        # Funciones utilitarias (formateo, cálculos, conversiones)
+```
+
+## Flujo de trabajo con Git (GitHub Flow)
+- **Nunca trabajar directamente sobre `main`.** Antes de empezar cualquier implementación, mejora o fix, crear una rama nueva desde `main` actualizado.
+- **Convención de nombres de rama:**
+  - `feat/<nombre-corto>` para funcionalidades nuevas.
+  - `fix/<nombre-corto>` para corrección de bugs.
+  - `chore/<nombre-corto>` para tareas de mantenimiento (dependencias, config, docs).
+  - `refactor/<nombre-corto>` para refactors sin cambio de comportamiento.
+- Los nombres de rama van en inglés y en minúsculas con guiones (ej: `feat/supabase-streaming`), aunque los commits y la comunicación sean en español.
+- Al finalizar el trabajo en la rama, abrir un Pull Request hacia `main` (no hacer merge directo salvo que el usuario lo indique explícitamente).
+- Antes de crear una rama nueva, confirmar con el usuario el nombre propuesto si no fue indicado explícitamente.

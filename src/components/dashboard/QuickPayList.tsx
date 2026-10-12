@@ -29,16 +29,18 @@ export function QuickPayList() {
               >
                 <span className="flex min-w-0 items-center gap-2 text-sm text-ink-soft">
                   <Icon className="h-4 w-4 shrink-0 text-blue-400" />
-                  <span className="truncate">{service.category}</span>
+                  <span className="truncate">{service.title}</span>
                 </span>
-                <a
-                  href={service.paymentLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 rounded-lg bg-accent px-3 py-1 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
-                >
-                  Pagar
-                </a>
+                {service.paymentLink && (
+                  <a
+                    href={service.paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded-lg bg-accent px-3 py-1 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
+                  >
+                    Pagar
+                  </a>
+                )}
               </li>
             )
           })}

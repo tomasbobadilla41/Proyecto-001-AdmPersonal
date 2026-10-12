@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { toast } from 'sonner'
 import type { ServiceConfig } from '../types/finance'
 import { useAuth } from './useAuth'
-import { deleteServiceRow, fetchServices, insertService, updateServiceRow } from '../services/paymentServicesApi'
+import { deleteServiceRow, fetchServices, insertService, updateServiceRow } from '../services/servicesApi'
 
 /** Reemplaza el elemento con ese `id`, o lo deja igual si no lo encuentra. */
 function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
@@ -22,9 +22,10 @@ interface ServicesStore {
 const ServicesStoreContext = createContext<ServicesStore | null>(null)
 
 /**
- * Directorio de servicios (nro de cliente/CBU + link de pago para cada
- * gasto fijo) del usuario activo, persistido en Supabase (tabla
- * `payment_services`, con RLS por `user_id`).
+ * Catálogo de servicios fijos (nro de cliente/CBU, link de pago, día de
+ * vencimiento) del usuario activo, persistido en Supabase (tabla
+ * `services`, con RLS por `user_id`). Los pagos mensuales en sí viven como
+ * `Expense` (ver `useExpenseStore`), vinculados vía `serviceId`.
  */
 export function ServicesStoreProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth()
