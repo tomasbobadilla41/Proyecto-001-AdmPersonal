@@ -1,6 +1,6 @@
 # Contexto del Proyecto — AdmPersonal
 
-> Documento generado para dar contexto completo a un agente de IA que retome este proyecto. Última actualización: 2026-10-11.
+> Documento generado para dar contexto completo a un agente de IA que retome este proyecto. Última actualización: 2026-10-12.
 
 ## Qué es
 
@@ -17,6 +17,10 @@ App web personal de administración financiera (gastos, inversiones, inmuebles e
 
 Todo el trabajo (interacción, comentarios de código, mensajes de la UI, commits) debe redactarse en español — está definido en `CLAUDE.md`.
 
+## Flujo de trabajo con Git
+
+Desde el refactor del Centro de Pagos (migración `008`), cada implementación o mejora se hace en su propia rama (`feat/...`, `fix/...`, `chore/...`, `refactor/...`) y se mergea a `main` vía Pull Request — nunca commits directos a `main`. Convención completa en `CLAUDE.md`.
+
 ## Estado de la migración localStorage → Supabase (eje central de los últimos commits)
 
 Terminada para **todos los módulos de negocio**. Cada módulo sigue el mismo patrón: tabla en Postgres con RLS por `user_id` → archivo `*Api.ts` en `src/services/` con las queries → Context/Provider en `src/hooks/use*Store.tsx` que expone estado + funciones async (ya no sync) → consumido por páginas/componentes.
@@ -30,6 +34,7 @@ Módulos migrados (orden cronológico por PRs, todos mergeados a `main`):
 5. Directorio de Servicios / Centro de Pagos (`payment_services` — migración `004`; migración `005` agregó `ON DELETE CASCADE` en las FK hacia `auth.users`, era un fix sobre lo anterior).
 6. Inmuebles — módulo grande con 5 tablas relacionadas: `properties`, `property_service_configs`, `property_expenses`, `property_incomes`, `lease_contracts` (migración `006`).
 7. Servicios de streaming personalizados (`custom_streaming_services` — migración `007`).
+8. Refactor del Centro de Pagos (migración `008`): dropea `payment_services` y la reemplaza por una arquitectura relacional que separa el **Catálogo de Servicios Fijos** (`services`: title, category, account_number/payment_link opcionales, `sender_email`, `due_day`) de los **Pagos Mensuales** en sí, que siguen viviendo como `expenses` vinculados vía `expenses.service_id` (`ON DELETE SET NULL`, mismo patrón que `property_expenses` en Inmuebles). El Centro de Pagos ahora muestra un semáforo "Pagado"/"Pendiente" por servicio (cruza `service_id` contra los gastos del mes en curso) y un modal chico de "Registrar pago" que solo pide monto y moneda. `sender_email` queda como columna preparada para una futura automatización de lectura de facturas por Gmail (sin implementar todavía).
 
 Lo único que sigue en `localStorage` intencionalmente es la preferencia de **tema visual** (`useTheme.tsx`) — no es dato de negocio, así que no se migra.
 
@@ -41,6 +46,7 @@ Lo único que sigue en `localStorage` intencionalmente es la preferencia de **te
 - **Gastos recurrentes y en cuotas** (`utils/installments.ts`): se generan por batch hacia meses futuros, comparten `recurringGroupId`, y se muestran como "TV (Cuota 1/6)".
 - **Portfolio Tracker**: cada compra (cripto o CEDEAR) es un registro independiente; el PPC se calcula agregando registros, no se guarda promediado. Cripto cotiza en USD (vía Binance), CEDEARs en ARS (BYMA).
 - **Módulo Inmuebles**: contratos de alquiler con actualización por índice (IPC/ICL o fijo), checklist de servicios por propiedad con estado (`PAID`/`PENDING`/`AUTO_DEBIT`), y relación "viva" entre gasto y configuración de servicio (FK `ON DELETE SET NULL` + snapshot del nombre para no perder histórico si se borra/renombra el servicio).
+- **Centro de Pagos**: cada servicio fijo del catálogo (`services`) se marca "Pagado este mes" o "Pendiente" cruzando su `id` contra los `expenses` con ese `service_id` cargados en el mes/año en curso — no hay un estado persistido, se calcula en el cliente a partir de los gastos reales.
 
 ## Estructura de carpetas (ya alineada con las convenciones del `CLAUDE.md`)
 
@@ -76,8 +82,11 @@ feat: migra el directorio de servicios (Centro de Pagos) a Supabase
 fix: agrega ON DELETE CASCADE a las FK hacia auth.users
 feat: migra el módulo de Inmuebles (5 tablas relacionadas) a Supabase
 feat: migra los servicios de streaming personalizados a Supabase
+docs: agrega flujo de trabajo con ramas por feature/fix a CLAUDE.md
+feat: refactoriza el Centro de Pagos a catálogo de servicios + pagos mensuales
 ```
 
 ## Posibles próximos pasos (inferidos, no confirmados con el usuario)
 
 - Revisar si hace falta un mecanismo de migración de datos para usuarios que todavía tengan información vieja en `localStorage` del navegador (distinto del `DataMigrationCenter`, que hoy es solo import/export CSV/PDF de gastos, no una migración de datos legacy).
+- Automatización de lectura de facturas por email (Gmail) para el Centro de Pagos: la columna `services.sender_email` ya existe para esto, pero no hay ninguna integración implementada todavía.
