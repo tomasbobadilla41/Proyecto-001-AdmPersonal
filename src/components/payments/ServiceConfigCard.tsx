@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import { Check, Copy, Pencil, Trash2 } from 'lucide-react'
+import { useRef, useState, type ChangeEvent } from 'react'
+import { Check, Copy, Loader2, Pencil, Trash2, Upload } from 'lucide-react'
+import { toast } from 'sonner'
 import type { ServiceConfig } from '../../types/finance'
 import { FIXED_CATEGORY_ICONS } from '../../utils/serviceIcons'
+import { onlyDigits, parseInvoicePdf } from '../../services/parseInvoiceApi'
 
 interface ServiceConfigCardProps {
   service: ServiceConfig
-  /** Si ya existe un gasto este mes con el `service_id` de este servicio ("Pagado" vs. "Pendiente"). */
   isPaidThisMonth: boolean
   onEdit: () => void
   onDelete: () => void
   onRegisterPayment: () => void
+  /** Se llama cuando la IA leyó el monto de una factura subida directo a esta tarjeta (sin pasar por el matching del dropzone general — ya sabemos de qué servicio es). */
+  onInvoiceAmountDetected: (montoDetectado: number) => void
 }
 
 export function ServiceConfigCard({
@@ -18,8 +21,11 @@ export function ServiceConfigCard({
   onEdit,
   onDelete,
   onRegisterPayment,
+  onInvoiceAmountDetected,
 }: ServiceConfigCardProps) {
   const [copied, setCopied] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const Icon = FIXED_CATEGORY_ICONS[service.category]
 
   async function handleCopy() {
@@ -30,6 +36,37 @@ export function ServiceConfigCard({
       setTimeout(() => setCopied(false), 1500)
     } catch {
       // Clipboard no disponible (permiso denegado, contexto no seguro, etc.) — no rompemos nada.
+    }
+  }
+
+  async function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setIsProcessing(true)
+    try {
+      const data = await parseInvoicePdf(file)
+
+      if (data.source === 'regex') {
+        toast.info('Gemini no respondió — se usó el monto leído sin IA. Revisalo antes de confirmar.')
+      }
+
+      // Ya sabemos de qué servicio es esta factura (la subieron en esta
+      // tarjeta a propósito), así que no hace falta matchear por cuenta —
+      // solo avisamos si el número leído no coincide, por si se equivocaron
+      // de archivo, pero igual dejamos precargar el monto.
+      if (service.accountNumber && onlyDigits(data.numero_cliente) !== onlyDigits(service.accountNumber)) {
+        toast.warning(
+          `El número de cliente de la factura ("${data.numero_cliente}") no coincide con el configurado ("${service.accountNumber}") — revisá el monto antes de confirmar.`,
+        )
+      }
+
+      onInvoiceAmountDetected(data.monto_total)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al leer factura. Probá de nuevo en unos segundos.')
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -109,6 +146,17 @@ export function ServiceConfigCard({
           className="flex-1 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-line"
         >
           Registrar Pago
+        </button>
+        <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileInputChange} />
+        <button
+          type="button"
+          onClick={() => !isProcessing && fileInputRef.current?.click()}
+          disabled={isProcessing}
+          aria-label="Subir factura en PDF"
+          title="Subir factura en PDF"
+          className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-ink-soft transition-colors hover:bg-line disabled:opacity-50"
+        >
+          {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
         </button>
       </div>
     </div>

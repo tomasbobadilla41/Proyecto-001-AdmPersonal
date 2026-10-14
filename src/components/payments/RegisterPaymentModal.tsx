@@ -9,6 +9,8 @@ interface RegisterPaymentModalProps {
   service: ServiceConfig | null
   onClose: () => void
   onSubmit: (expense: Expense) => void
+  /** Monto detectado por el lector de facturas (IA) — si se pasa, precarga el campo en vez de dejarlo vacío. */
+  prefillAmount?: number
 }
 
 const INPUT_CLASSNAME =
@@ -20,16 +22,16 @@ const INPUT_CLASSNAME =
  * partir del servicio), para no obligar a pasar por el formulario completo
  * de gastos cada vez que se paga un servicio fijo del mes.
  */
-export function RegisterPaymentModal({ service, onClose, onSubmit }: RegisterPaymentModalProps) {
+export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount }: RegisterPaymentModalProps) {
   const [monto, setMonto] = useState('')
   const [moneda, setMoneda] = useState<Currency>('ARS')
 
   useEffect(() => {
     if (service) {
-      setMonto('')
+      setMonto(prefillAmount !== undefined ? String(prefillAmount) : '')
       setMoneda('ARS')
     }
-  }, [service])
+  }, [service, prefillAmount])
 
   if (!service) return null
   const currentService = service

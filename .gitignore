@@ -18,3 +18,9 @@ dist-ssr
 
 # OS
 .DS_Store
+
+# Facturas reales usadas para probar el lector de facturas (datos personales)
+factura_prueba/
+
+# Caché local del Supabase CLI
+supabase/.temp/

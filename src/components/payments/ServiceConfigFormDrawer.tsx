@@ -8,6 +8,8 @@ interface ServiceConfigFormDrawerProps {
   onSubmit: (service: ServiceConfig) => void
   /** Si se pasa, el formulario edita ese servicio; si no, configura uno nuevo. */
   initialService?: ServiceConfig
+  /** Solo aplica cuando se está creando (no en edición): precarga cuenta/categoría sugeridas por el lector de facturas. */
+  initialDraft?: { accountNumber?: string; category?: FixedExpenseCategory }
 }
 
 const INPUT_CLASSNAME =
@@ -20,6 +22,7 @@ export function ServiceConfigFormDrawer({
   onClose,
   onSubmit,
   initialService,
+  initialDraft,
 }: ServiceConfigFormDrawerProps) {
   const isEditMode = Boolean(initialService)
 
@@ -42,13 +45,13 @@ export function ServiceConfigFormDrawer({
       setDueDay(initialService.dueDay ? String(initialService.dueDay) : '')
     } else {
       setTitle('')
-      setCategory(DEFAULT_CATEGORY)
-      setAccountNumber('')
+      setCategory(initialDraft?.category ?? DEFAULT_CATEGORY)
+      setAccountNumber(initialDraft?.accountNumber ?? '')
       setPaymentLink('')
       setSenderEmail('')
       setDueDay('')
     }
-  }, [isOpen, initialService])
+  }, [isOpen, initialService, initialDraft])
 
   if (!isOpen) return null
 
@@ -58,6 +61,12 @@ export function ServiceConfigFormDrawer({
 
     const parsedDueDay = Number(dueDay)
 
+    // No llama a `onClose` acá: `onSubmit` es async (el alta pega contra
+    // Supabase) y el padre es quien cierra el drawer cuando corresponde —
+    // si cerráramos acá de entrada, se pisaría cualquier estado que el padre
+    // necesite leer recién cuando el `await` del alta termine (ej: el monto
+    // precargado por el lector de facturas, que así quedaba en `undefined`
+    // antes de que se pudiera usar para abrir "Registrar Pago" encadenado).
     onSubmit({
       id: initialService?.id ?? `svc-${Date.now()}`,
       title: title.trim(),
@@ -67,7 +76,6 @@ export function ServiceConfigFormDrawer({
       senderEmail: senderEmail.trim() || undefined,
       dueDay: dueDay && parsedDueDay >= 1 && parsedDueDay <= 31 ? parsedDueDay : undefined,
     })
-    onClose()
   }
 
   return (
