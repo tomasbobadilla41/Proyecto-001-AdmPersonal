@@ -12,8 +12,8 @@ function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
 interface ServicesStore {
   services: ServiceConfig[]
   isLoading: boolean
-  /** Agrega un servicio nuevo al directorio. Devuelve `false` si falló (ya mostró su propio toast). */
-  addService: (service: ServiceConfig) => Promise<boolean>
+  /** Agrega un servicio nuevo al directorio. Devuelve el servicio insertado (con su `id` real) o `false` si falló (ya mostró su propio toast). */
+  addService: (service: ServiceConfig) => Promise<ServiceConfig | false>
   /** Reemplaza un servicio existente (mismo `id`). */
   updateService: (service: ServiceConfig) => Promise<boolean>
   removeService: (id: string) => Promise<boolean>
@@ -67,7 +67,7 @@ export function ServicesStoreProvider({ children }: { children: ReactNode }) {
       try {
         const inserted = await insertService(service, userId)
         setServices((prev) => [...prev, inserted])
-        return true
+        return inserted
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'No se pudo guardar el servicio.')
         return false
