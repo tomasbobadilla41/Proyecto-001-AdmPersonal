@@ -1,6 +1,6 @@
 # Contexto del Proyecto — AdmPersonal
 
-> Documento generado para dar contexto completo a un agente de IA que retome este proyecto. Última actualización: 2026-10-14.
+> Documento generado para dar contexto completo a un agente de IA que retome este proyecto. Última actualización: 2026-10-15.
 
 ## Qué es
 
@@ -132,6 +132,15 @@ Flujo:
 **Probado en vivo con el CSV real** del usuario (4 suscripciones): parseo correcto, alta en catálogo + gastos insertados con la categoría/fecha/monto correctos, y al reimportar el mismo CSV las 4 aparecieron marcadas "Ya cargada este mes" y destildadas.
 
 **A futuro, no implementado todavía** (lo mencionó el usuario como siguiente paso): desglosar más el Dashboard — hoy Gastos Flexibles es un solo número, la idea es separarlo en sub-categorías (salidas, ropa, regalos, etc.) igual que ya se hizo acá con Streaming dentro de Fijos.
+
+## Selector de mes en el Dashboard
+
+El Dashboard (`src/pages/DashboardPage.tsx`) ya no muestra siempre el mes real de hoy — hay un desplegable (`MonthSelector`, header a la derecha del título) con los últimos 12 meses (actual + 11 anteriores, vía `getTrailingPeriods(12)`) para ver el resumen 50/30/20 de cualquiera de ellos.
+
+- `current` (el `MonthlySummary` que alimenta las 4 tarjetas de arriba, los widgets de cuotas/categoría, y el input de tipo de cambio/sueldo) ahora se calcula con `calculateMonthlySummary` para el período **elegido** en el selector, no con `summaries.at(-1)` como antes (que siempre era el mes real).
+- El gráfico "Ingresos vs Gastos" de abajo (`IncomeExpenseChart`) queda **fijo a los últimos 6 meses reales**, sin importar qué mes esté elegido arriba — decisión a propósito (conversación con el usuario): sirve como referencia de tendencia constante, no tiene por qué moverse con el selector.
+- `ExchangeRateInput` y `SalaryCard` (cargar tipo de cambio / sueldo) siguen atados a `current.mes`/`current.anio` como antes — como efecto secundario lindo, esto ahora permite cargar/corregir el tipo de cambio o el sueldo de un mes pasado, no solo del actual.
+- "Accesos Rápidos de Pago" y demás widgets que no dependen del mes (catálogo de servicios, etc.) no cambian con el selector — es esperable, no leen `current`.
 
 ## Posibles próximos pasos (inferidos, no confirmados con el usuario)
 

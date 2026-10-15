@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { SalaryCard } from '../components/dashboard/SalaryCard'
 import { FixedExpensesCard } from '../components/dashboard/FixedExpensesCard'
 import { FlexibleExpensesCard } from '../components/dashboard/FlexibleExpensesCard'
 import { SavingsCard } from '../components/dashboard/SavingsCard'
 import { ExchangeRateInput } from '../components/dashboard/ExchangeRateInput'
 import { IncomeExpenseChart } from '../components/dashboard/IncomeExpenseChart'
+import { MonthSelector } from '../components/dashboard/MonthSelector'
 import { QuickPayList } from '../components/dashboard/QuickPayList'
 import { ActiveInstallmentsWidget } from '../components/dashboard/ActiveInstallmentsWidget'
 import { ExpenseBreakdownWidget } from '../components/dashboard/ExpenseBreakdownWidget'
@@ -12,10 +13,18 @@ import { useExpenseStore } from '../hooks/useExpenseStore'
 import { useIncomeStore } from '../hooks/useIncomeStore'
 import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { calculateActualSplit, calculateBudgetRule } from '../utils/budgetRule'
-import { calculateMonthlySummaries, getExchangeRate, getTrailingPeriods, MESES_LARGOS } from '../utils/finance'
+import {
+  calculateMonthlySummaries,
+  calculateMonthlySummary,
+  getExchangeRate,
+  getTrailingPeriods,
+  MESES_LARGOS,
+} from '../utils/finance'
 
-/** Cantidad de meses a mostrar en el gráfico comparativo. */
+/** Cantidad de meses a mostrar en el gráfico comparativo (siempre los últimos N reales, sin importar el mes elegido en el selector). */
 const MESES_A_MOSTRAR = 6
+/** Cantidad de meses que ofrece el selector del Dashboard (el actual + los 11 anteriores). */
+const MESES_SELECTOR = 12
 
 export function DashboardPage() {
   const { expenses } = useExpenseStore()
@@ -31,8 +40,22 @@ export function DashboardPage() {
     [periodos, incomes, expenses, exchangeRates],
   )
 
-  // `getTrailingPeriods` siempre incluye el mes actual como último elemento.
-  const current = summaries.at(-1)!
+  // Selector de mes del Dashboard: el actual + los 11 anteriores, de más
+  // nuevo a más viejo. Por defecto arranca en el mes real de hoy.
+  const selectorPeriods = useMemo(() => getTrailingPeriods(MESES_SELECTOR), [])
+  const [selectedPeriod, setSelectedPeriod] = useState(() => selectorPeriods.at(-1)!)
+
+  const current = useMemo(
+    () =>
+      calculateMonthlySummary(
+        selectedPeriod.mes,
+        selectedPeriod.anio,
+        incomes,
+        expenses,
+        getExchangeRate(exchangeRates, selectedPeriod.mes, selectedPeriod.anio),
+      ),
+    [selectedPeriod, incomes, expenses, exchangeRates],
+  )
   const currentIncome = incomes.find((i) => i.mes === current.mes && i.anio === current.anio)
 
   // Regla 50/30/20: montos ideales según el ingreso, y lo que realmente se
@@ -70,14 +93,17 @@ export function DashboardPage() {
           <h2 className="text-xl font-semibold text-ink">
             Resumen de {MESES_LARGOS[current.mes - 1]} {current.anio}
           </h2>
-          <p className="text-sm text-muted">Métricas del mes actual — regla 50/30/20</p>
+          <p className="text-sm text-muted">Métricas del mes elegido — regla 50/30/20</p>
         </div>
-        <ExchangeRateInput
-          mes={current.mes}
-          anio={current.anio}
-          valor={current.tipoCambioUsado}
-          onSave={handleSaveExchangeRate}
-        />
+        <div className="flex items-center gap-3">
+          <MonthSelector periods={selectorPeriods} selected={selectedPeriod} onChange={setSelectedPeriod} />
+          <ExchangeRateInput
+            mes={current.mes}
+            anio={current.anio}
+            valor={current.tipoCambioUsado}
+            onSave={handleSaveExchangeRate}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
