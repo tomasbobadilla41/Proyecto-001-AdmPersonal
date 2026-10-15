@@ -4,6 +4,7 @@ import {
   CreditCard,
   LayoutDashboard,
   Receipt,
+  Repeat,
   Settings,
   TrendingUp,
   Wallet,
@@ -25,6 +26,7 @@ const PERSONAL_NAV_ITEMS: NavItem[] = [
   { key: 'gastos', label: 'Gastos', icon: Receipt },
   { key: 'inversiones', label: 'Inversiones', icon: TrendingUp },
   { key: 'pagos', label: 'Centro de Pagos', icon: CreditCard },
+  { key: 'suscripciones', label: 'Suscripciones', icon: Repeat },
   { key: 'config', label: 'Configuración', icon: Settings },
 ]
 

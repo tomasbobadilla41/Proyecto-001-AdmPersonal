@@ -4,6 +4,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { ExpensesPage } from './pages/ExpensesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
 import { PaymentsHubPage } from './pages/PaymentsHubPage'
+import { SubscriptionsPage } from './pages/SubscriptionsPage'
 import { RealEstateDashboardView } from './pages/RealEstateDashboardView'
 import { SettingsPage } from './pages/SettingsPage'
 import { AuthView } from './pages/AuthView'
@@ -45,6 +46,7 @@ function AuthGate() {
                     {activeTab === 'gastos' && <ExpensesPage />}
                     {activeTab === 'inversiones' && <InvestmentsPage />}
                     {activeTab === 'pagos' && <PaymentsHubPage />}
+                    {activeTab === 'suscripciones' && <SubscriptionsPage />}
                     {activeTab === 'inmuebles' && <RealEstateDashboardView />}
                     {activeTab === 'config' && <SettingsPage />}
                   </AppLayout>
