@@ -1,6 +1,6 @@
 # Contexto del Proyecto — AdmPersonal
 
-> Documento generado para dar contexto completo a un agente de IA que retome este proyecto. Última actualización: 2026-10-12.
+> Documento generado para dar contexto completo a un agente de IA que retome este proyecto. Última actualización: 2026-10-14.
 
 ## Qué es
 
@@ -54,7 +54,7 @@ Lo único que sigue en `localStorage` intencionalmente es la preferencia de **te
 src/
   components/   # dashboard, expenses, investments, payments, realestate, layout, settings, ui (shadcn), common
   hooks/        # un Provider+hook por store de dominio (gastos, ingresos, portfolio, inmuebles, etc.)
-  pages/        # una vista por sección del menú (Dashboard, Gastos, Inversiones, Pagos, Inmuebles, Config, Auth)
+  pages/        # una vista por sección del menú (Dashboard, Gastos, Inversiones, Pagos, Suscripciones, Inmuebles, Config, Auth)
   services/     # capa de acceso a Supabase, un archivo *Api.ts por tabla/dominio
   types/        # finance.ts, money.ts, realEstate.ts, navigation.ts
   utils/        # budgetRule, currency, installments, portfolio, realEstate, leaseContract, chartTheme, etc.
@@ -116,6 +116,22 @@ Flujo actual:
 **Atajo por tarjeta, sin pasar por el matching**: cada `ServiceConfigCard` tiene también su propio botón de "Subir factura" (ícono de upload, al lado de "Registrar Pago") — como ya se sabe de qué servicio es (la subieron en esa tarjeta puntual), no hace falta matchear por cuenta/categoría: solo se extrae el monto y se abre "Registrar Pago" directo para ese servicio. Si el `numero_cliente` leído no coincide con el `account_number` configurado, se muestra un toast de advertencia (no bloqueante, por si se equivocaron de archivo) pero igual se precarga el monto. Pensado para el caso típico de este usuario: un servicio como "Luz" es siempre el mismo, no hace falta que el sistema adivine cuál es.
 
 **Nota sobre lo que se intentó antes y se tiró**: en un primer intento se armó una Edge Function (`process-invoices`) con OAuth de Gmail (refresh token generado con un script local, polling por cron) — se deployó, se probó, funcionó técnicamente, pero se abandonó por los motivos de arriba antes de programar el cron. Se borró todo (la función de Supabase, los secrets `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REFRESH_TOKEN`, el script `get_google_token.ts`) — si en algún momento aparece un proveedor que sí manda el PDF adjunto y vale la pena retomar el polling, hay que reconstruirlo de cero (nada grave: es poco código, la parte de Gemini se reusa tal cual en `parse-invoice`).
+
+## Suscripciones (import CSV de impuestito.com)
+
+Solapa nueva (`Suscripciones` en el nav, ícono `Repeat`, `src/pages/SubscriptionsPage.tsx`) para llevar un registro mensual de lo que se gasta en streaming/suscripciones (Spotify, YouTube Premium, etc.) — **separada a propósito del Centro de Pagos**: estos servicios se debitan automático, no mandan factura en PDF, y el Centro de Pagos quedó pensado para los servicios de la casa (que no necesariamente tienen débito automático).
+
+**No hizo falta tabla nueva.** Reusa el catálogo que ya existía para el selector de streaming de la carga manual de gastos: tabla `custom_streaming_services` (migración `007`) vía `useStreamingServicesStore` / `DEFAULT_STREAMING_SERVICES` (`src/utils/streamingServices.ts`). Los gastos en sí van a `expenses` igual que cualquier otro (`category: 'Streaming (Netflix, YT)'`, `subcategoria` = nombre de la suscripción) — por eso ya suman solos a Gastos Fijos en el Dashboard, sin tocar nada ahí.
+
+Flujo:
+1. El usuario descarga desde **impuestito.com** un CSV con las suscripciones que tiene guardadas ahí (esa web calcula el costo total en ARS de cada una, impuestos de pagos en el exterior incluidos — no hay API pública para esto, por eso es manual/mensual).
+2. Lo arrastra sobre el dropzone de la solapa. `parseSubscriptionsCsv` (`src/utils/parseSubscriptionsCsv.ts`, con `papaparse` — ya era dependencia del proyecto, no se agregó nada) lee dos columnas nada más: `Suscripción` y `Total (ARS)` (el resto — moneda original, cotización, impuestos desglosados — no hace falta para cargar el gasto).
+3. Se arma una lista de revisión con checkboxes (**todo con confirmación manual, mismo criterio que el Lector de Facturas — nada se inserta solo**): cada fila muestra el monto, y un badge "Nueva" si el nombre no está en el catálogo de streaming todavía, o "Ya cargada este mes" si ya existe un gasto de Streaming con ese mismo nombre en el mes en curso (chequeo igual al semáforo de Centro de Pagos). Las ya cargadas vienen destildadas por default (el usuario las prende a mano si quiere repetir igual).
+4. Al confirmar: por cada ítem tildado, si es "Nueva" primero se agrega al catálogo (`addStreamingService`, mismo que usa el selector manual) y después se inserta el gasto (`addExpenses`, batch único).
+
+**Probado en vivo con el CSV real** del usuario (4 suscripciones): parseo correcto, alta en catálogo + gastos insertados con la categoría/fecha/monto correctos, y al reimportar el mismo CSV las 4 aparecieron marcadas "Ya cargada este mes" y destildadas.
+
+**A futuro, no implementado todavía** (lo mencionó el usuario como siguiente paso): desglosar más el Dashboard — hoy Gastos Flexibles es un solo número, la idea es separarlo en sub-categorías (salidas, ropa, regalos, etc.) igual que ya se hizo acá con Streaming dentro de Fijos.
 
 ## Posibles próximos pasos (inferidos, no confirmados con el usuario)
 
