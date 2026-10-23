@@ -85,7 +85,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
               <UserNav />
             </div>
           </div>
-          <nav className="flex border-t border-line">
+          <nav className="flex gap-1 overflow-x-auto border-t border-line px-1">
             {PERSONAL_NAV_ITEMS.map((item) => (
               <NavButton
                 key={item.key}
@@ -95,7 +95,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
                 variant="mobile"
               />
             ))}
-            <div className="my-2 w-px bg-line" />
+            <div className="my-2 w-px shrink-0 bg-line" />
             {PROPERTY_NAV_ITEMS.map((item) => (
               <NavButton
                 key={item.key}
@@ -129,7 +129,7 @@ function NavButton({ item, active, onClick, variant = 'sidebar' }: NavButtonProp
       <button
         type="button"
         onClick={() => onClick(key)}
-        className={`flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors ${
+        className={`flex shrink-0 flex-col items-center gap-1 whitespace-nowrap px-3 py-2 text-xs font-medium transition-colors ${
           active ? 'text-accent' : 'text-muted hover:text-ink-soft'
         }`}
       >
