@@ -12,13 +12,23 @@ const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
 
 // El Centro de Pagos la invoca por fetch desde el navegador — sin esto el
 // preflight OPTIONS no pasa y el POST ni llega a esta función.
-// Restringido al dev server de Vite: todavía no hay dominio de producción
-// deployado. Cuando lo haya, agregarlo acá.
-const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "http://localhost:5173",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// Access-Control-Allow-Origin no admite una lista, así que se refleja el
+// origen de la request solo si está en esta whitelist (dev + producción).
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:5173",
+  "https://proyecto-001-adm-personal.vercel.app",
+]);
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
+}
 
 // Debe quedar sincronizado a mano con `EXPENSE_CATEGORIES.FIJO` en
 // src/types/finance.ts (la Edge Function corre en Deno, no puede importar
@@ -55,8 +65,8 @@ interface InvoiceData {
   categoria_sugerida: string;
 }
 
-function errorResponse(message: string, status: number): Response {
-  return Response.json({ error: message }, { status, headers: CORS_HEADERS });
+function errorResponse(message: string, status: number, headers: Record<string, string>): Response {
+  return Response.json({ error: message }, { status, headers });
 }
 
 const MAX_GEMINI_ATTEMPTS = 3;
@@ -97,28 +107,30 @@ async function callGeminiWithRetry(url: string, body: string): Promise<Response>
 
 export default {
   async fetch(req: Request): Promise<Response> {
+    const cors = corsHeaders(req.headers.get("origin"));
+
     if (req.method === "OPTIONS") {
-      return new Response("ok", { headers: CORS_HEADERS });
+      return new Response("ok", { headers: cors });
     }
 
     if (req.method !== "POST") {
-      return errorResponse("Método no permitido.", 405);
+      return errorResponse("Método no permitido.", 405, cors);
     }
 
     let pdfBase64: unknown;
     try {
       ({ pdfBase64 } = await req.json());
     } catch {
-      return errorResponse("Body inválido: se esperaba JSON.", 400);
+      return errorResponse("Body inválido: se esperaba JSON.", 400, cors);
     }
 
     if (typeof pdfBase64 !== "string" || !pdfBase64) {
-      return errorResponse("Falta pdfBase64 en el body.", 400);
+      return errorResponse("Falta pdfBase64 en el body.", 400, cors);
     }
 
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     if (!apiKey) {
-      return errorResponse("Falta GEMINI_API_KEY en los secretos de la función.", 500);
+      return errorResponse("Falta GEMINI_API_KEY en los secretos de la función.", 500, cors);
     }
 
     const url = `${GEMINI_API_URL}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
@@ -140,13 +152,13 @@ export default {
       geminiResponse = await callGeminiWithRetry(url, requestBody);
     } catch {
       // Gemini caído / timeout de red — 502, no 500: el problema es del upstream, no nuestro.
-      return errorResponse("No se pudo conectar con Gemini.", 502);
+      return errorResponse("No se pudo conectar con Gemini.", 502, cors);
     }
 
     if (!geminiResponse.ok) {
       // Si llegó acá con 503/429 es porque ya se reintentó `MAX_GEMINI_ATTEMPTS`
       // veces y siguió fallando — recién ahí se lo mostramos al usuario.
-      return errorResponse(`Gemini devolvió ${geminiResponse.status} analizando la factura.`, 502);
+      return errorResponse(`Gemini devolvió ${geminiResponse.status} analizando la factura.`, 502, cors);
     }
 
     const data = (await geminiResponse.json()) as {
@@ -154,16 +166,16 @@ export default {
     };
     const text = data.candidates?.[0]?.content.parts[0]?.text;
     if (!text) {
-      return errorResponse("Gemini no devolvió contenido para este PDF.", 502);
+      return errorResponse("Gemini no devolvió contenido para este PDF.", 502, cors);
     }
 
     let invoice: InvoiceData;
     try {
       invoice = JSON.parse(text) as InvoiceData;
     } catch {
-      return errorResponse("Gemini devolvió una respuesta que no se pudo interpretar.", 502);
+      return errorResponse("Gemini devolvió una respuesta que no se pudo interpretar.", 502, cors);
     }
 
-    return Response.json(invoice, { headers: CORS_HEADERS });
+    return Response.json(invoice, { headers: cors });
   },
 };
