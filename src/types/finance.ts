@@ -7,6 +7,12 @@ export type ExpenseType = 'FIJO' | 'FLEXIBLE'
  * Subcategorías de gasto, agrupadas según sean Fijas o Flexibles. Fuente
  * única de verdad: `ExpenseCategory` (abajo) y las opciones de cada select
  * del formulario se derivan de este mismo objeto, así no pueden desincronizarse.
+ *
+ * Esta es la fuente real para el frontend, pero hay 2 lugares más que corren
+ * en runtimes separados y no pueden importar este archivo — si agregás o
+ * renombrás una categoría FIJA, actualizalos a mano:
+ *   - supabase/functions/parse-invoice/index.ts (FIXED_CATEGORIES, para Gemini)
+ *   - supabase/migrations/ (el CHECK constraint de expenses.category)
  */
 export const EXPENSE_CATEGORIES = {
   FIJO: [

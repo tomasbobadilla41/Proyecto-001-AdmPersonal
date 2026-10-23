@@ -1,11 +1,13 @@
+import type { FixedExpenseCategory } from '../types/finance'
+
 export interface RegexInvoiceData {
   monto_total: number
   numero_cliente: string
-  categoria_sugerida: string
+  categoria_sugerida: FixedExpenseCategory
 }
 
 interface ProviderPattern {
-  categoria_sugerida: string
+  categoria_sugerida: FixedExpenseCategory
   /** Si el texto de la factura matchea esto, se asume que es de este proveedor. */
   detect: RegExp
   /** Debe tener un grupo de captura con el monto, en formato argentino ("30.528,06"). */

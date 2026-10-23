@@ -34,6 +34,13 @@ function corsHeaders(origin: string | null): Record<string, string> {
 // src/types/finance.ts (la Edge Function corre en Deno, no puede importar
 // código del frontend directo). "Otro" es la salida de emergencia para que
 // el modelo no fuerce una categoría real cuando no está seguro.
+//
+// Checklist al agregar/renombrar una categoría FIJA — hay 3 lugares más que
+// tocar, ninguno puede importar de los otros (corren en runtimes distintos):
+//   1. src/types/finance.ts            → EXPENSE_CATEGORIES.FIJO (fuente real)
+//   2. supabase/migrations/            → el CHECK constraint de expenses.category
+//   3. src/utils/invoiceRegexFallback.ts → tipado contra FixedExpenseCategory,
+//      así que un desajuste ahí falla en build time, no en runtime.
 const FIXED_CATEGORIES = [
   "Alquiler",
   "Expensas",
