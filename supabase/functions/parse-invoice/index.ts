@@ -12,8 +12,10 @@ const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
 
 // El Centro de Pagos la invoca por fetch desde el navegador — sin esto el
 // preflight OPTIONS no pasa y el POST ni llega a esta función.
+// Restringido al dev server de Vite: todavía no hay dominio de producción
+// deployado. Cuando lo haya, agregarlo acá.
 const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "http://localhost:5173",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
