@@ -30,11 +30,7 @@ import {
   updatePropertyRow,
   updateServiceConfigRow,
 } from '../services/realEstateApi'
-
-/** Reemplaza el elemento con ese `id`, o lo deja igual si no lo encuentra. */
-function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
-  return items.map((item) => (item.id === updated.id ? updated : item))
-}
+import { useAddAction, useRemoveAction, useUpdateAction } from './storeHelpers'
 
 interface RealEstateStore {
   properties: Property[]
@@ -139,44 +135,9 @@ export function RealEstateStoreProvider({ children }: { children: ReactNode }) {
   }, [userId])
 
   // --- Properties ---
-  const addProperty = useCallback(
-    async (property: Property) => {
-      if (!userId) return false
-      try {
-        const inserted = await insertProperty(property, userId)
-        setProperties((prev) => [...prev, inserted])
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo guardar la propiedad.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const updateProperty = useCallback(
-    async (property: Property) => {
-      if (!userId) return false
-      try {
-        const updated = await updatePropertyRow(property, userId)
-        setProperties((prev) => replaceById(prev, updated))
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar la propiedad.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const removeProperty = useCallback(async (id: string) => {
-    try {
-      await deletePropertyRow(id)
-      setProperties((prev) => prev.filter((p) => p.id !== id))
-      return true
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar la propiedad.')
-      return false
-    }
-  }, [])
+  const addProperty = useAddAction(setProperties, userId, insertProperty, 'No se pudo guardar la propiedad.')
+  const updateProperty = useUpdateAction(setProperties, userId, updatePropertyRow, 'No se pudo actualizar la propiedad.')
+  const removeProperty = useRemoveAction(setProperties, deletePropertyRow, 'No se pudo eliminar la propiedad.')
   const removePropertyCascade = useCallback(async (id: string) => {
     try {
       await deletePropertyRow(id)
@@ -193,164 +154,29 @@ export function RealEstateStoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // --- Service configs ---
-  const addServiceConfig = useCallback(
-    async (config: PropertyServiceConfig) => {
-      if (!userId) return false
-      try {
-        const inserted = await insertServiceConfig(config, userId)
-        setServiceConfigs((prev) => [...prev, inserted])
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo guardar el servicio.')
-        return false
-      }
-    },
-    [userId],
+  const addServiceConfig = useAddAction(setServiceConfigs, userId, insertServiceConfig, 'No se pudo guardar el servicio.')
+  const updateServiceConfig = useUpdateAction(
+    setServiceConfigs,
+    userId,
+    updateServiceConfigRow,
+    'No se pudo actualizar el servicio.',
   )
-  const updateServiceConfig = useCallback(
-    async (config: PropertyServiceConfig) => {
-      if (!userId) return false
-      try {
-        const updated = await updateServiceConfigRow(config, userId)
-        setServiceConfigs((prev) => replaceById(prev, updated))
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el servicio.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const removeServiceConfig = useCallback(async (id: string) => {
-    try {
-      await deleteServiceConfigRow(id)
-      setServiceConfigs((prev) => prev.filter((c) => c.id !== id))
-      return true
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el servicio.')
-      return false
-    }
-  }, [])
+  const removeServiceConfig = useRemoveAction(setServiceConfigs, deleteServiceConfigRow, 'No se pudo eliminar el servicio.')
 
   // --- Expenses ---
-  const addExpense = useCallback(
-    async (expense: PropertyExpense) => {
-      if (!userId) return false
-      try {
-        const inserted = await insertPropertyExpense(expense, userId)
-        setExpenses((prev) => [...prev, inserted])
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo guardar el gasto.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const updateExpense = useCallback(
-    async (expense: PropertyExpense) => {
-      if (!userId) return false
-      try {
-        const updated = await updatePropertyExpenseRow(expense, userId)
-        setExpenses((prev) => replaceById(prev, updated))
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el gasto.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const removeExpense = useCallback(async (id: string) => {
-    try {
-      await deletePropertyExpenseRow(id)
-      setExpenses((prev) => prev.filter((e) => e.id !== id))
-      return true
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el gasto.')
-      return false
-    }
-  }, [])
+  const addExpense = useAddAction(setExpenses, userId, insertPropertyExpense, 'No se pudo guardar el gasto.')
+  const updateExpense = useUpdateAction(setExpenses, userId, updatePropertyExpenseRow, 'No se pudo actualizar el gasto.')
+  const removeExpense = useRemoveAction(setExpenses, deletePropertyExpenseRow, 'No se pudo eliminar el gasto.')
 
   // --- Incomes ---
-  const addIncome = useCallback(
-    async (income: PropertyIncome) => {
-      if (!userId) return false
-      try {
-        const inserted = await insertPropertyIncome(income, userId)
-        setIncomes((prev) => [...prev, inserted])
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo guardar el ingreso.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const updateIncome = useCallback(
-    async (income: PropertyIncome) => {
-      if (!userId) return false
-      try {
-        const updated = await updatePropertyIncomeRow(income, userId)
-        setIncomes((prev) => replaceById(prev, updated))
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el ingreso.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const removeIncome = useCallback(async (id: string) => {
-    try {
-      await deletePropertyIncomeRow(id)
-      setIncomes((prev) => prev.filter((i) => i.id !== id))
-      return true
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el ingreso.')
-      return false
-    }
-  }, [])
+  const addIncome = useAddAction(setIncomes, userId, insertPropertyIncome, 'No se pudo guardar el ingreso.')
+  const updateIncome = useUpdateAction(setIncomes, userId, updatePropertyIncomeRow, 'No se pudo actualizar el ingreso.')
+  const removeIncome = useRemoveAction(setIncomes, deletePropertyIncomeRow, 'No se pudo eliminar el ingreso.')
 
   // --- Contracts ---
-  const addContract = useCallback(
-    async (contract: LeaseContract) => {
-      if (!userId) return false
-      try {
-        const inserted = await insertContract(contract, userId)
-        setContracts((prev) => [...prev, inserted])
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo guardar el contrato.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const updateContract = useCallback(
-    async (contract: LeaseContract) => {
-      if (!userId) return false
-      try {
-        const updated = await updateContractRow(contract, userId)
-        setContracts((prev) => replaceById(prev, updated))
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el contrato.')
-        return false
-      }
-    },
-    [userId],
-  )
-  const removeContract = useCallback(async (id: string) => {
-    try {
-      await deleteContractRow(id)
-      setContracts((prev) => prev.filter((c) => c.id !== id))
-      return true
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el contrato.')
-      return false
-    }
-  }, [])
+  const addContract = useAddAction(setContracts, userId, insertContract, 'No se pudo guardar el contrato.')
+  const updateContract = useUpdateAction(setContracts, userId, updateContractRow, 'No se pudo actualizar el contrato.')
+  const removeContract = useRemoveAction(setContracts, deleteContractRow, 'No se pudo eliminar el contrato.')
 
   const value = useMemo<RealEstateStore>(
     () => ({

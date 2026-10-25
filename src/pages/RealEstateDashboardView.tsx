@@ -90,7 +90,10 @@ export function RealEstateDashboardView() {
       <PropertyFormDrawer
         isOpen={isAddingProperty}
         onClose={() => setIsAddingProperty(false)}
-        onSubmit={addProperty}
+        onSubmit={(property) => {
+          void addProperty(property)
+          setIsAddingProperty(false)
+        }}
       />
     </div>
   )

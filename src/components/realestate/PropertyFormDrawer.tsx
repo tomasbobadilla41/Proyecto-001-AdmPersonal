@@ -36,12 +36,14 @@ export function PropertyFormDrawer({ isOpen, onClose, onSubmit, initialProperty 
     event.preventDefault()
     if (!name.trim() || !address.trim()) return
 
+    // No llama a `onClose` acá a propósito: `onSubmit` dispara un alta/edición
+    // async contra Supabase, y el padre es quien decide cuándo cerrar (ver
+    // ServiceConfigFormDrawer para el bug real que este patrón evitó).
     onSubmit({
       id: initialProperty?.id ?? `prop-${Date.now()}`,
       name: name.trim(),
       address: address.trim(),
     })
-    onClose()
   }
 
   return (

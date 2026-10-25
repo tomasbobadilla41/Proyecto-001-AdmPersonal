@@ -67,6 +67,8 @@ export function LeaseContractFormDrawer({
     // Si no se cargó "precio actual", arranca igual al precio base.
     const currentAmount = Number(currentRentAmount) || initialAmount
 
+    // No llama a `onClose` acá a propósito: `onSubmit` dispara un alta/edición
+    // async contra Supabase, y el padre es quien decide cuándo cerrar.
     onSubmit({
       id: initialContract?.id ?? `lease-${Date.now()}`,
       propertyId,
@@ -79,7 +81,6 @@ export function LeaseContractFormDrawer({
       indexType,
       baseIndexValue: indexType === 'FIJO' ? undefined : Number(baseIndexValue) || undefined,
     })
-    onClose()
   }
 
   return (
