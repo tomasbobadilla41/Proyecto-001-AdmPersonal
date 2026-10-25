@@ -7,9 +7,13 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { supabase } from '../lib/supabase'
 
-type AuthMode = 'login' | 'signup' | 'reset'
+type AuthMode = 'login' | 'reset'
 
-/** Muro de acceso: login/registro/recuperación de contraseña contra Supabase Auth. */
+/**
+ * Muro de acceso: login/recuperación de contraseña contra Supabase Auth.
+ * Sin registro: la app es de uso personal, las cuentas se crean a mano desde
+ * el panel de Supabase (Authentication → Users), no desde esta pantalla.
+ */
 export function AuthView() {
   const [mode, setMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
@@ -24,10 +28,6 @@ export function AuthView() {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-      } else if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({ email, password })
-        if (error) throw error
-        toast.success('Cuenta creada correctamente. Ya podés iniciar sesión.')
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/update-password`,
@@ -51,12 +51,9 @@ export function AuthView() {
             <Wallet className="h-6 w-6 text-accent" />
             Adm Personal
           </div>
-          <CardTitle>
-            {mode === 'login' ? 'Iniciar sesión' : mode === 'signup' ? 'Crear cuenta' : 'Recuperar contraseña'}
-          </CardTitle>
+          <CardTitle>{mode === 'login' ? 'Iniciar sesión' : 'Recuperar contraseña'}</CardTitle>
           <CardDescription>
             {mode === 'login' && 'Ingresá tus credenciales para acceder a tus finanzas.'}
-            {mode === 'signup' && 'Registrate con tu correo para empezar a usar la app.'}
             {mode === 'reset' && 'Ingresá tu correo y te enviamos un enlace para restablecerla.'}
           </CardDescription>
         </CardHeader>
@@ -75,24 +72,22 @@ export function AuthView() {
                 placeholder="tu@email.com"
               />
             </div>
-            {mode !== 'reset' && (
+            {mode === 'login' && (
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Contraseña</Label>
-                  {mode === 'login' && (
-                    <button
-                      type="button"
-                      className="text-xs text-muted hover:text-accent"
-                      onClick={() => setMode('reset')}
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="text-xs text-muted hover:text-accent"
+                    onClick={() => setMode('reset')}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
                 </div>
                 <Input
                   id="password"
                   type="password"
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  autoComplete="current-password"
                   required
                   minLength={6}
                   value={password}
@@ -106,23 +101,11 @@ export function AuthView() {
           <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {mode === 'login' && 'Iniciar Sesión'}
-              {mode === 'signup' && 'Crear Cuenta'}
-              {mode === 'reset' && 'Enviar enlace'}
+              {mode === 'login' ? 'Iniciar Sesión' : 'Enviar enlace'}
             </Button>
-            {mode === 'reset' ? (
+            {mode === 'reset' && (
               <Button type="button" variant="ghost" className="w-full" disabled={loading} onClick={() => setMode('login')}>
                 Volver a iniciar sesión
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                disabled={loading}
-                onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-              >
-                {mode === 'login' ? '¿No tenés cuenta? Creá una' : '¿Ya tenés cuenta? Iniciá sesión'}
               </Button>
             )}
           </CardFooter>

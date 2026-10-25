@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { X } from 'lucide-react'
+import { toast } from 'sonner'
 import { EXPENSE_CATEGORIES, type FixedExpenseCategory, type ServiceConfig } from '../../types/finance'
+import { isSafeHttpUrl } from '../../utils/url'
 
 interface ServiceConfigFormDrawerProps {
   isOpen: boolean
@@ -59,6 +61,12 @@ export function ServiceConfigFormDrawer({
     event.preventDefault()
     if (!title.trim()) return
 
+    const trimmedPaymentLink = paymentLink.trim()
+    if (trimmedPaymentLink && !isSafeHttpUrl(trimmedPaymentLink)) {
+      toast.error('El link de pago debe empezar con http:// o https://')
+      return
+    }
+
     const parsedDueDay = Number(dueDay)
 
     // No llama a `onClose` acá: `onSubmit` es async (el alta pega contra
@@ -72,7 +80,7 @@ export function ServiceConfigFormDrawer({
       title: title.trim(),
       category,
       accountNumber: accountNumber.trim() || undefined,
-      paymentLink: paymentLink.trim() || undefined,
+      paymentLink: trimmedPaymentLink || undefined,
       senderEmail: senderEmail.trim() || undefined,
       dueDay: dueDay && parsedDueDay >= 1 && parsedDueDay <= 31 ? parsedDueDay : undefined,
     })

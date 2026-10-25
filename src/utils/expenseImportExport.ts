@@ -27,11 +27,18 @@ function triggerDownload(filename: string, blob: Blob): void {
   URL.revokeObjectURL(url)
 }
 
+// Si una celda empieza con =, +, - o @, Excel/Sheets puede interpretarla
+// como fórmula al abrir el CSV (ej. una descripción "=cmd|'/c calc'!A1").
+// Prefijarla con comilla simple la neutraliza sin alterar el valor visible.
+function escapeCsvFormula(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value
+}
+
 function expenseToRow(expense: Expense): Record<CsvHeader, string> {
   return {
     Fecha: formatDateAR(expense.fecha),
-    Descripcion: expense.descripcion,
-    Categoria: expense.category,
+    Descripcion: escapeCsvFormula(expense.descripcion),
+    Categoria: escapeCsvFormula(expense.category),
     Monto: expense.monto.toFixed(2),
     Moneda: expense.moneda,
     Tipo: expense.expenseType,

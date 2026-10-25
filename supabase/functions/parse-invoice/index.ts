@@ -5,6 +5,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts";
 
+// Mismo límite validado en el cliente (parseInvoiceApi.ts) — esto es la
+// defensa de servidor, por si alguien le pega directo a la función sin pasar
+// por la UI. Base64 infla ~4/3 el tamaño original, de ahí el factor.
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_BASE64_LENGTH = Math.ceil((MAX_PDF_SIZE_BYTES * 4) / 3);
+
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 // Fallback si no está seteado el secreto GEMINI_MODEL. gemini-3.8-flash es el
 // modelo vigente verificado (gemini-1.5-flash ya da 404, Google lo deprecó).
@@ -126,6 +132,10 @@ export default {
 
     if (typeof pdfBase64 !== "string" || !pdfBase64) {
       return errorResponse("Falta pdfBase64 en el body.", 400, cors);
+    }
+
+    if (pdfBase64.length > MAX_BASE64_LENGTH) {
+      return errorResponse("El PDF supera el tamaño máximo permitido (10 MB).", 413, cors);
     }
 
     const apiKey = Deno.env.get("GEMINI_API_KEY");

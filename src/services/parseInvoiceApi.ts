@@ -6,6 +6,10 @@ import { extractInvoiceWithRegex } from '../utils/invoiceRegexFallback'
 // se aborta y se muestra un error — nunca debe quedar esperando para siempre.
 const INVOKE_TIMEOUT_MS = 25_000
 
+// Un PDF más pesado que esto puede colgar el navegador al pasarlo a Base64
+// y agotar la memoria de la Edge Function. Mismo límite validado en el servidor.
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024
+
 export interface ParsedInvoice {
   monto_total: number
   numero_cliente: string
@@ -70,6 +74,10 @@ async function parseWithGemini(file: File): Promise<GeminiInvoiceData> {
 export async function parseInvoicePdf(file: File): Promise<ParsedInvoice> {
   if (file.type !== 'application/pdf') {
     throw new Error('Solo se admiten archivos PDF.')
+  }
+
+  if (file.size > MAX_PDF_SIZE_BYTES) {
+    throw new Error('El PDF supera el tamaño máximo permitido (10 MB).')
   }
 
   try {
