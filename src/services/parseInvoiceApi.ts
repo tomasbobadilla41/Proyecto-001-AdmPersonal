@@ -3,9 +3,11 @@ import { extractPdfText } from '../utils/pdfText'
 import { extractInvoiceWithRegex } from '../utils/invoiceRegexFallback'
 import { fileToBase64, MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
 
-// Si la función tarda más que esto (red colgada, sesión vencida, lo que sea),
-// se aborta y se muestra un error — nunca debe quedar esperando para siempre.
-const INVOKE_TIMEOUT_MS = 25_000
+// La Edge Function puede tardar hasta ~63s en el peor caso (3 intentos a
+// Gemini de 20s + los delays entre reintentos) antes de rendirse sola — este
+// timeout tiene que ser mayor a eso para no cortar la espera antes que el
+// propio servidor termine sus reintentos.
+const INVOKE_TIMEOUT_MS = 70_000
 
 export interface ParsedInvoice {
   monto_total: number

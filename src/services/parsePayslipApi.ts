@@ -1,9 +1,10 @@
 import { supabase } from '../lib/supabase'
 import { fileToBase64, MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
 
-// Si la función tarda más que esto (red colgada, sesión vencida, lo que sea),
-// se aborta y se muestra un error — nunca debe quedar esperando para siempre.
-const INVOKE_TIMEOUT_MS = 25_000
+// Mismo razonamiento que parseInvoiceApi.ts: la Edge Function puede tardar
+// hasta ~63s en el peor caso antes de rendirse sola (ver GEMINI_FETCH_TIMEOUT_MS
+// en parse-payslip/index.ts), así que este timeout tiene que ser mayor.
+const INVOKE_TIMEOUT_MS = 70_000
 
 export interface ParsedPayslip {
   sueldoNeto: number
