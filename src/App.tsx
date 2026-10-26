@@ -43,7 +43,7 @@ function AuthGate() {
                 <PortfolioStoreProvider>
                   <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
                     {activeTab === 'dashboard' && <DashboardPage />}
-                    {activeTab === 'gastos' && <ExpensesPage />}
+                    {activeTab === 'gastos' && <ExpensesPage onGoToPayments={() => setActiveTab('pagos')} />}
                     {activeTab === 'inversiones' && <InvestmentsPage />}
                     {activeTab === 'pagos' && <PaymentsHubPage />}
                     {activeTab === 'suscripciones' && <SubscriptionsPage />}

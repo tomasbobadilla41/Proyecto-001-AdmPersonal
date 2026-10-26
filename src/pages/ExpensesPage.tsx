@@ -14,7 +14,12 @@ import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finan
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 
-export function ExpensesPage() {
+interface ExpensesPageProps {
+  /** Lleva al Centro de Pagos — usado por el aviso de "gasto fijo que se repite" dentro del formulario de carga. */
+  onGoToPayments: () => void
+}
+
+export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   const { exchangeRates } = useExchangeRateStore()
   const { expenses, isLoading, addExpenses, updateExpense, removeExpense } = useExpenseStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
@@ -146,6 +151,7 @@ export function ExpensesPage() {
         onClose={() => setFormState(null)}
         onSubmit={handleSubmit}
         initialExpense={formState?.mode === 'edit' ? formState.expense : undefined}
+        onGoToPayments={onGoToPayments}
       />
     </div>
   )
