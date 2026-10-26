@@ -1,12 +1,24 @@
-import { useState } from 'react'
-import { Pencil, Wallet } from 'lucide-react'
+import { useRef, useState, type ChangeEvent } from 'react'
+import { Loader2, Pencil, Upload, Wallet } from 'lucide-react'
+import { toast } from 'sonner'
 import type { Income } from '../../types/finance'
 import { formatMoney, formatUsdEquivalent } from '../../utils/currency'
 import { toARS } from '../../utils/finance'
+import { parsePayslipPdf, type ParsedPayslip } from '../../services/parsePayslipApi'
 import { StatCard } from '../common/StatCard'
 
 const INPUT_CLASSNAME =
   'rounded-lg border border-line bg-app px-2 py-1.5 text-sm text-ink focus:border-accent focus:outline-none'
+
+/** "Detectamos 8hs extra (≈ $45.000) en el recibo." — cantidad y monto son opcionales, cada uno se omite si Gemini no lo pudo leer. */
+function formatHorasExtrasNote(horasExtras: ParsedPayslip['horasExtras']): string {
+  const partes: string[] = []
+  if (horasExtras.cantidadHoras) partes.push(`${horasExtras.cantidadHoras}hs`)
+  if (horasExtras.monto) partes.push(`≈ ${formatMoney({ amount: horasExtras.monto, currency: 'ARS' })}`)
+
+  const detalle = partes.length > 0 ? ` (${partes.join(', ')})` : ''
+  return `Detectamos horas extra${detalle} en el recibo.`
+}
 
 interface SalaryCardProps {
   mes: number
@@ -20,10 +32,16 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
   const [isEditing, setIsEditing] = useState(false)
   const [sueldoARS, setSueldoARS] = useState('')
   const [sueldoUSD, setSueldoUSD] = useState('')
+  const [isReadingPdf, setIsReadingPdf] = useState(false)
+  // No se persiste — ver la discusión en el PR: es un aviso que solo vale
+  // para este momento de carga, no un dato histórico consultable después.
+  const [horasExtras, setHorasExtras] = useState<ParsedPayslip['horasExtras'] | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function startEditing() {
     setSueldoARS(income ? String(income.sueldoARS) : '')
     setSueldoUSD(income ? String(income.sueldoUSD) : '')
+    setHorasExtras(null)
     setIsEditing(true)
   }
 
@@ -36,6 +54,24 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
       sueldoUSD: Number(sueldoUSD) || 0,
     })
     setIsEditing(false)
+  }
+
+  async function handlePayslipFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setIsReadingPdf(true)
+    try {
+      const data = await parsePayslipPdf(file)
+      setSueldoARS(String(data.sueldoNeto))
+      setHorasExtras(data.horasExtras.detectadas ? data.horasExtras : null)
+      toast.success('Recibo leído — revisá el monto antes de guardar.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al leer el recibo. Probá de nuevo en unos segundos.')
+    } finally {
+      setIsReadingPdf(false)
+    }
   }
 
   if (isEditing) {
@@ -65,6 +101,30 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
               className={INPUT_CLASSNAME}
             />
           </label>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handlePayslipFileChange}
+          />
+          <button
+            type="button"
+            onClick={() => !isReadingPdf && fileInputRef.current?.click()}
+            disabled={isReadingPdf}
+            className="inline-flex items-center gap-1.5 self-start text-xs font-medium text-accent hover:underline disabled:opacity-50"
+          >
+            {isReadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {isReadingPdf ? 'Leyendo recibo…' : 'o subí tu recibo (PDF)'}
+          </button>
+
+          {horasExtras && (
+            <p className="rounded-lg border border-accent/30 bg-accent/5 px-2 py-1.5 text-xs text-ink-soft">
+              {formatHorasExtrasNote(horasExtras)}
+            </p>
+          )}
+
           <div className="flex gap-2">
             <button
               type="button"
