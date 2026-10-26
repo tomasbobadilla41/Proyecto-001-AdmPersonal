@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import type { ServiceConfig } from '../../types/finance'
 import { FIXED_CATEGORY_ICONS } from '../../utils/serviceIcons'
 import { onlyDigits, parseInvoicePdf } from '../../services/parseInvoiceApi'
+import { isSafeHttpUrl } from '../../utils/url'
 
 interface ServiceConfigCardProps {
   service: ServiceConfig
@@ -130,7 +131,7 @@ export function ServiceConfigCard({
       )}
 
       <div className="flex gap-2">
-        {service.paymentLink && (
+        {service.paymentLink && isSafeHttpUrl(service.paymentLink) && (
           <a
             href={service.paymentLink}
             target="_blank"

@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react'
 import { useServicesStore } from '../../hooks/useServicesStore'
 import { FIXED_CATEGORY_ICONS } from '../../utils/serviceIcons'
+import { isSafeHttpUrl } from '../../utils/url'
 
 /** Lista compacta de "un click para pagar", leyendo el directorio del Centro de Pagos. */
 export function QuickPayList() {
@@ -31,7 +32,7 @@ export function QuickPayList() {
                   <Icon className="h-4 w-4 shrink-0 text-blue-400" />
                   <span className="truncate">{service.title}</span>
                 </span>
-                {service.paymentLink && (
+                {service.paymentLink && isSafeHttpUrl(service.paymentLink) && (
                   <a
                     href={service.paymentLink}
                     target="_blank"
