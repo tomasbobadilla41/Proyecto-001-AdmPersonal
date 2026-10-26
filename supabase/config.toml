@@ -12,11 +12,3 @@ entrypoint = "./functions/parse-invoice/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/parse-invoice/*.html" ]
-
-[functions.parse-payslip]
-enabled = true
-# Mismo motivo que parse-invoice: sin esto, cualquiera sin sesión podría
-# invocarla y gastar la cuota de Gemini.
-verify_jwt = true
-import_map = "./functions/parse-payslip/deno.json"
-entrypoint = "./functions/parse-payslip/index.ts"

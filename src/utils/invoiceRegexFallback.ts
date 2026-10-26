@@ -1,3 +1,5 @@
+import { parseArgentineAmount } from './finance'
+
 export interface RegexInvoiceData {
   monto_total: number
   numero_cliente: string
@@ -36,11 +38,6 @@ const PROVIDER_PATTERNS: ProviderPattern[] = [
     accountNumber: /N[uú]mero de cliente[\s\S]{0,80}?(\d{8,20})/i,
   },
 ]
-
-/** Convierte "30.528,06" (formato argentino: punto de miles, coma decimal) a `30528.06`. */
-function parseArgentineAmount(raw: string): number {
-  return Number(raw.replace(/\./g, '').replace(',', '.'))
-}
 
 /** Extrae monto/cliente/categoría del texto de una factura con patrones fijos, sin IA. `null` si no reconoce al proveedor o no encuentra el monto. */
 export function extractInvoiceWithRegex(text: string): RegexInvoiceData | null {

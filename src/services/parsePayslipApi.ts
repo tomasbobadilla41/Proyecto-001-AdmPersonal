@@ -1,38 +1,16 @@
-import { supabase } from '../lib/supabase'
-import { fileToBase64, MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
+import { extractPdfText } from '../utils/pdfText'
+import { extractPayslipWithRegex, type RegexPayslipData } from '../utils/payslipRegexParser'
+import { MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
 
-// Mismo razonamiento que parseInvoiceApi.ts: la Edge Function puede tardar
-// hasta ~63s en el peor caso antes de rendirse sola (ver GEMINI_FETCH_TIMEOUT_MS
-// en parse-payslip/index.ts), así que este timeout tiene que ser mayor.
-const INVOKE_TIMEOUT_MS = 70_000
-
-export interface ParsedPayslip {
-  sueldoNeto: number
-  horasExtras: {
-    detectadas: boolean
-    cantidadHoras?: number
-    monto?: number
-  }
-  descuentoGimnasio?: number
-}
-
-interface GeminiPayslipData {
-  sueldo_neto: number
-  horas_extras: {
-    detectadas: boolean
-    cantidad_horas?: number
-    monto?: number
-  }
-  descuento_gimnasio?: number
-}
+export type ParsedPayslip = RegexPayslipData
 
 /**
- * Manda un PDF de recibo de sueldo a Gemini (vía la Edge Function
- * `parse-payslip`) y devuelve el sueldo neto, si detectó horas extra, y el
- * descuento de gimnasio si el recibo lo trae. A diferencia de
- * `parseInvoicePdf`, no tiene fallback sin IA — el recibo siempre es del
- * mismo empleador con formato consistente, así que si Gemini falla se
- * propaga el error y se reintenta más tarde en vez de adivinar con regex.
+ * Extrae sueldo neto, horas extra y descuento de gimnasio del PDF del
+ * recibo de sueldo. Sin IA: a diferencia de las facturas de servicios (que
+ * vienen de proveedores distintos con formatos distintos entre sí), el
+ * recibo siempre es del mismo empleador con el mismo formato — un parser
+ * por patrones fijos (`payslipRegexParser.ts`) es gratis, instantáneo y
+ * más confiable que mandarlo a una IA cada vez.
  */
 export async function parsePayslipPdf(file: File): Promise<ParsedPayslip> {
   if (file.type !== 'application/pdf') {
@@ -43,23 +21,12 @@ export async function parsePayslipPdf(file: File): Promise<ParsedPayslip> {
     throw new Error('El PDF supera el tamaño máximo permitido (10 MB).')
   }
 
-  const pdfBase64 = await fileToBase64(file)
-  const { data, error } = await supabase.functions.invoke<GeminiPayslipData>('parse-payslip', {
-    body: { pdfBase64 },
-    timeout: INVOKE_TIMEOUT_MS,
-  })
+  const text = await extractPdfText(file)
+  const data = extractPayslipWithRegex(text)
 
-  if (error || !data) {
-    throw new Error('Error al leer el recibo con la IA.')
+  if (!data) {
+    throw new Error('No se pudo leer el sueldo neto de este recibo. Cargalo a mano.')
   }
 
-  return {
-    sueldoNeto: data.sueldo_neto,
-    horasExtras: {
-      detectadas: data.horas_extras.detectadas,
-      cantidadHoras: data.horas_extras.cantidad_horas,
-      monto: data.horas_extras.monto,
-    },
-    descuentoGimnasio: data.descuento_gimnasio,
-  }
+  return data
 }
