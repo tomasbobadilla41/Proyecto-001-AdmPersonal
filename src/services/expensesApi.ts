@@ -15,6 +15,7 @@ interface ExpenseRow {
   subcategory: string | null
   recurring_group_id: string | null
   service_id: string | null
+  card_import_ref: string | null
 }
 
 function rowToExpense(row: ExpenseRow): Expense {
@@ -29,6 +30,7 @@ function rowToExpense(row: ExpenseRow): Expense {
     subcategoria: row.subcategory ?? undefined,
     recurringGroupId: row.recurring_group_id ?? undefined,
     serviceId: row.service_id ?? undefined,
+    cardImportRef: row.card_import_ref ?? undefined,
   }
 }
 
@@ -45,6 +47,7 @@ function expenseToInsertRow(expense: Expense, userId: string) {
     subcategory: expense.subcategoria ?? null,
     recurring_group_id: expense.recurringGroupId ?? null,
     service_id: expense.serviceId ?? null,
+    card_import_ref: expense.cardImportRef ?? null,
   }
 }
 

@@ -63,6 +63,14 @@ export interface Expense {
   recurringGroupId?: string
   /** Si este gasto corresponde a un pago registrado desde el Centro de Pagos, el `id` de ese `ServiceConfig`. */
   serviceId?: string
+  /**
+   * "<número de cupón>-<cuota actual>" si este gasto vino del lector de
+   * resumen de tarjeta (`cardStatementParser.ts`) — sirve para detectar si
+   * una fila ya se importó antes sin confundirla con la cuota siguiente de
+   * la misma compra (que comparte el mismo cupón, pero no el mismo número
+   * de cuota).
+   */
+  cardImportRef?: string
 }
 
 export interface Income {
