@@ -170,3 +170,8 @@ export function addMonthsUTC(date: Date, months: number): Date {
     Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth(), Math.min(day, lastDayOfTargetMonth)),
   )
 }
+
+/** Convierte "30.528,06" (formato argentino: punto de miles, coma decimal) a `30528.06`. */
+export function parseArgentineAmount(raw: string): number {
+  return Number(raw.replace(/\./g, '').replace(',', '.'))
+}

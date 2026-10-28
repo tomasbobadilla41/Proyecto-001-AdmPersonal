@@ -5,6 +5,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts";
 
+// Mismo límite validado en el cliente (parseInvoiceApi.ts) — esto es la
+// defensa de servidor, por si alguien le pega directo a la función sin pasar
+// por la UI. Base64 infla ~4/3 el tamaño original, de ahí el factor.
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_BASE64_LENGTH = Math.ceil((MAX_PDF_SIZE_BYTES * 4) / 3);
+
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 // Fallback si no está seteado el secreto GEMINI_MODEL. gemini-3.8-flash es el
 // modelo vigente verificado (gemini-1.5-flash ya da 404, Google lo deprecó).
@@ -83,33 +89,51 @@ const MAX_GEMINI_ATTEMPTS = 3;
 // arreglan solos, reintentarlos solo tarda más en fallar.
 const RETRYABLE_STATUSES = new Set([503, 429]);
 const RETRY_DELAYS_MS = [1000, 2000];
+// Si Gemini no responde nada (ni error, se cuelga) dentro de esto, lo
+// tratamos como transitorio y reintentamos — sin esto, un fetch colgado
+// se queda esperando hasta que la plataforma mata la función entera a los
+// 150s (visto en vivo: IDLE_TIMEOUT), en vez de devolver un error claro.
+const GEMINI_FETCH_TIMEOUT_MS = 20_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Pega a Gemini, reintentando sola ante 503/429 (hasta `MAX_GEMINI_ATTEMPTS` veces). */
+function fetchGeminiWithTimeout(url: string, body: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GEMINI_FETCH_TIMEOUT_MS);
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeoutId));
+}
+
+/** Pega a Gemini, reintentando sola ante 503/429 o timeout (hasta `MAX_GEMINI_ATTEMPTS` veces). */
 async function callGeminiWithRetry(url: string, body: string): Promise<Response> {
   let lastResponse: Response | undefined;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_GEMINI_ATTEMPTS; attempt++) {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
-
-    if (response.ok || !RETRYABLE_STATUSES.has(response.status)) {
-      return response;
+    try {
+      const response = await fetchGeminiWithTimeout(url, body);
+      if (response.ok || !RETRYABLE_STATUSES.has(response.status)) {
+        return response;
+      }
+      lastResponse = response;
+    } catch (error) {
+      // Timeout (AbortError) u otro corte de red — tratado como transitorio, igual que 503/429.
+      lastError = error;
     }
 
-    lastResponse = response;
     if (attempt < MAX_GEMINI_ATTEMPTS) {
       await sleep(RETRY_DELAYS_MS[attempt - 1]);
     }
   }
 
-  return lastResponse as Response;
+  if (lastResponse) return lastResponse;
+  throw lastError ?? new Error("Gemini no respondió.");
 }
 
 export default {
@@ -133,6 +157,10 @@ export default {
 
     if (typeof pdfBase64 !== "string" || !pdfBase64) {
       return errorResponse("Falta pdfBase64 en el body.", 400, cors);
+    }
+
+    if (pdfBase64.length > MAX_BASE64_LENGTH) {
+      return errorResponse("El PDF supera el tamaño máximo permitido (10 MB).", 413, cors);
     }
 
     const apiKey = Deno.env.get("GEMINI_API_KEY");
