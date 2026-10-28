@@ -278,6 +278,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
         onClose={() => setCardStatementData(null)}
         onConfirm={handleCardStatementConfirm}
         parsed={cardStatementData}
+        existingExpenses={expenses}
       />
     </div>
   )

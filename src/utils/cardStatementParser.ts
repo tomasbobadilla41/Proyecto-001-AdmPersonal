@@ -7,6 +7,8 @@ export interface CardStatementItem {
   monto: number
   cuotaActual?: number
   cuotaTotal?: number
+  /** Número de cupón — identifica la compra original, no cada cobro mensual (se repite en cada cuota). */
+  cupon: string
 }
 
 export interface ParsedCardStatement {
@@ -45,6 +47,16 @@ function parseStatementDate(raw: string): Date | null {
 }
 
 /**
+ * Clave para detectar si un consumo ya se importó antes. El cupón identifica la compra
+ * original, no cada cobro mensual — una compra en 3 cuotas repite el mismo cupón en los
+ * 3 resúmenes — así que hace falta sumarle el número de cuota para distinguir cada cobro
+ * real entre sí (y no confundir, por ej., la cuota 2/3 con un reintento de la 1/3).
+ */
+export function cardImportRefFor(item: Pick<CardStatementItem, 'cupon' | 'cuotaActual'>): string {
+  return item.cuotaActual ? `${item.cupon}-${item.cuotaActual}` : item.cupon
+}
+
+/**
  * Extrae los consumos individuales de un resumen de tarjeta (BBVA Visa, único formato
  * probado por ahora). `null` si no reconoce el formato o no encuentra ningún consumo —
  * a diferencia de `extractInvoiceWithRegex`, acá no hay respaldo por IA: una tabla con
@@ -60,7 +72,7 @@ export function parseCardStatement(text: string): ParsedCardStatement | null {
 
   const items: CardStatementItem[] = []
   for (const rowMatch of rowsBlock.matchAll(ROW_RE)) {
-    const [, fechaRaw, descripcionRaw, cuotaActualRaw, cuotaTotalRaw, , montoRaw] = rowMatch
+    const [, fechaRaw, descripcionRaw, cuotaActualRaw, cuotaTotalRaw, cuponRaw, montoRaw] = rowMatch
     const fecha = parseStatementDate(fechaRaw)
     const monto = parseArgentineAmount(montoRaw)
     // Un monto negativo es un pago o ajuste a favor, no una compra — no debería
@@ -73,6 +85,7 @@ export function parseCardStatement(text: string): ParsedCardStatement | null {
       monto,
       cuotaActual: cuotaActualRaw ? Number(cuotaActualRaw) : undefined,
       cuotaTotal: cuotaTotalRaw ? Number(cuotaTotalRaw) : undefined,
+      cupon: cuponRaw,
     })
   }
 

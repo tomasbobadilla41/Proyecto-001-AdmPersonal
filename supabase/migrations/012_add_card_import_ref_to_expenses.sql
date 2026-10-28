@@ -1,0 +1,11 @@
+-- ============================================
+-- Migración 012: Referencia de importación de resumen de tarjeta
+-- ============================================
+-- Guarda "<número de cupón>-<cuota actual>" para los gastos creados desde el
+-- lector de resumen de tarjeta (cardStatementParser.ts) — el cupón identifica
+-- la transacción original, no cada cobro mensual, así que una compra en 3
+-- cuotas repite el mismo cupón en los 3 resúmenes; agregar el número de
+-- cuota a la referencia es lo que distingue cada cobro real entre sí. Sirve
+-- para detectar si una fila ya se importó antes (mismo resumen subido dos
+-- veces) sin confundirla con la cuota siguiente de la misma compra.
+ALTER TABLE expenses ADD COLUMN card_import_ref TEXT;

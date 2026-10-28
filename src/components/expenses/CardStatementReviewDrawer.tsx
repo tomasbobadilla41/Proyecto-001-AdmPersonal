@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { X } from 'lucide-react'
 import { EXPENSE_CATEGORIES, isFixedExpenseCategory, type Expense, type ExpenseCategory } from '../../types/finance'
-import type { ParsedCardStatement } from '../../utils/cardStatementParser'
+import { cardImportRefFor, type ParsedCardStatement } from '../../utils/cardStatementParser'
 import { formatMoney } from '../../utils/currency'
 import { formatDateAR, toDateOnlyUTC } from '../../utils/finance'
 
@@ -10,6 +10,8 @@ interface CardStatementReviewDrawerProps {
   onClose: () => void
   onConfirm: (expenses: Expense[]) => void
   parsed: ParsedCardStatement | null
+  /** Gastos ya cargados — para detectar filas que coinciden con un `cardImportRef` ya existente. */
+  existingExpenses: Expense[]
 }
 
 interface ReviewRow {
@@ -23,6 +25,9 @@ interface ReviewRow {
   monto: string
   cuotaActual?: number
   cuotaTotal?: number
+  importRef: string
+  /** Ya existe un gasto con este `cardImportRef` — se precarga destildada, pero se puede re-tildar a mano. */
+  alreadyImported: boolean
 }
 
 const INPUT_CLASSNAME =
@@ -30,7 +35,7 @@ const INPUT_CLASSNAME =
 const DEFAULT_CATEGORY: ExpenseCategory = 'Tarjeta de Crédito'
 const RECONCILIATION_TOLERANCE = 0.01
 
-function rowsFromParsed(parsed: ParsedCardStatement): ReviewRow[] {
+function rowsFromParsed(parsed: ParsedCardStatement, existingExpenses: Expense[]): ReviewRow[] {
   // La fecha que figura en cada fila del resumen es la de la compra
   // original, no la de este cobro — una compra en cuotas repite la misma
   // fecha de compra en los resúmenes de todos los meses en que todavía
@@ -39,17 +44,27 @@ function rowsFromParsed(parsed: ParsedCardStatement): ReviewRow[] {
   // el período del propio resumen como fecha por defecto, no la de la fila.
   const fechaFacturacion = parsed.vencimiento ?? parsed.cierre
 
-  return parsed.items.map((item, index) => ({
-    key: `${index}-${item.descripcion}`,
-    included: true,
-    fecha: toDateOnlyUTC(fechaFacturacion ?? item.fecha),
-    fechaCompraOriginal: item.fecha,
-    descripcion: item.descripcion,
-    category: DEFAULT_CATEGORY,
-    monto: String(item.monto),
-    cuotaActual: item.cuotaActual,
-    cuotaTotal: item.cuotaTotal,
-  }))
+  const existingRefs = new Set(
+    existingExpenses.map((e) => e.cardImportRef).filter((ref): ref is string => Boolean(ref)),
+  )
+
+  return parsed.items.map((item, index) => {
+    const importRef = cardImportRefFor(item)
+    const alreadyImported = existingRefs.has(importRef)
+    return {
+      key: `${index}-${item.descripcion}`,
+      included: !alreadyImported,
+      fecha: toDateOnlyUTC(fechaFacturacion ?? item.fecha),
+      fechaCompraOriginal: item.fecha,
+      descripcion: item.descripcion,
+      category: DEFAULT_CATEGORY,
+      monto: String(item.monto),
+      cuotaActual: item.cuotaActual,
+      cuotaTotal: item.cuotaTotal,
+      importRef,
+      alreadyImported,
+    }
+  })
 }
 
 /**
@@ -59,13 +74,14 @@ function rowsFromParsed(parsed: ParsedCardStatement): ReviewRow[] {
  * con cada edición/exclusión: es la forma de notar si el parseo del PDF se comió una
  * fila (ej: un resumen con más páginas) antes de guardar nada.
  */
-export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed }: CardStatementReviewDrawerProps) {
+export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed, existingExpenses }: CardStatementReviewDrawerProps) {
   const [rows, setRows] = useState<ReviewRow[]>([])
 
   useEffect(() => {
     if (isOpen && parsed) {
-      setRows(rowsFromParsed(parsed))
+      setRows(rowsFromParsed(parsed, existingExpenses))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, parsed])
 
   if (!isOpen || !parsed) return null
@@ -90,6 +106,7 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed }
       moneda: 'ARS',
       expenseType: isFixedExpenseCategory(row.category) ? 'FIJO' : 'FLEXIBLE',
       category: row.category,
+      cardImportRef: row.importRef,
     }))
     onConfirm(expenses)
   }
@@ -161,6 +178,7 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed }
                 <span className="text-xs text-faint">
                   {row.cuotaActual && row.cuotaTotal && `Cuota ${row.cuotaActual}/${row.cuotaTotal} · `}
                   Compra original: {formatDateAR(row.fechaCompraOriginal)}
+                  {row.alreadyImported && <span className="text-amber-400"> · Ya importado</span>}
                 </span>
               </div>
 
