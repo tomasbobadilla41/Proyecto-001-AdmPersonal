@@ -63,8 +63,8 @@ export function ExpensesPage() {
         <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="overflow-x-auto rounded-2xl border border-line bg-panel lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="overflow-x-auto rounded-2xl border border-line bg-panel xl:col-span-2">
           <table className="w-full text-left text-sm">
             <thead className="bg-panel/70 text-muted">
               <tr>
@@ -100,7 +100,9 @@ export function ExpensesPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{expense.descripcion}</td>
+                  <td className="max-w-[260px] truncate px-4 py-3" title={expense.descripcion}>
+                    {expense.descripcion}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-medium">
                     {formatMoney({ amount: expense.monto, currency: expense.moneda })}
                   </td>
