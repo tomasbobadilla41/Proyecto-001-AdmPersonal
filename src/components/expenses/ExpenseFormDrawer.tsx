@@ -15,10 +15,11 @@ interface ExpenseFormDrawerProps {
   /** Si se pasa, el formulario edita ese gasto; si no, carga uno nuevo. */
   initialExpense?: Expense
   /**
-   * Precarga Tipo/Categoría al crear un gasto nuevo (ej: desde "Registrar
-   * Pago" en el Centro de Pagos). Se ignora si `initialExpense` está presente.
+   * Precarga Tipo/Categoría/Monto al crear un gasto nuevo (ej: desde
+   * "Registrar Pago" en el Centro de Pagos, o desde el lector de facturas en
+   * Gastos). Se ignora si `initialExpense` está presente.
    */
-  prefill?: { expenseType: ExpenseType; category: ExpenseCategory }
+  prefill?: { expenseType: ExpenseType; category?: ExpenseCategory; monto?: number }
   /**
    * Lleva al Centro de Pagos y cierra el drawer. Un gasto Fijo que se repite
    * todos los meses (alquiler, luz, gimnasio) se carga ahí como servicio —
@@ -89,7 +90,7 @@ export function ExpenseFormDrawer({
       setIsInstallment(false)
       setInstallmentCount('1')
     } else {
-      setMonto('')
+      setMonto(prefill?.monto !== undefined ? String(prefill.monto) : '')
       setMoneda('ARS')
       setExpenseType(prefill?.expenseType ?? DEFAULT_EXPENSE_TYPE)
       setCategory(prefill?.category ?? DEFAULT_CATEGORY)

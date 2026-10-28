@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { FileText, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { EXPENSE_CATEGORIES, type FixedExpenseCategory, type ServiceConfig } from '../../types/finance'
+import { isFixedExpenseCategory, type FixedExpenseCategory, type ServiceConfig } from '../../types/finance'
 import { onlyDigits, parseInvoicePdf } from '../../services/parseInvoiceApi'
 
 interface InvoiceDropzoneProps {
@@ -10,10 +10,6 @@ interface InvoiceDropzoneProps {
   onMatch: (service: ServiceConfig, montoDetectado: number) => void
   /** Se llama cuando no matcheó ningún servicio existente — para precargar el alta de uno nuevo. */
   onNoMatch: (sugerencia: { accountNumber: string; category?: FixedExpenseCategory; montoDetectado: number }) => void
-}
-
-function isFixedExpenseCategory(value: string): value is FixedExpenseCategory {
-  return (EXPENSE_CATEGORIES.FIJO as readonly string[]).includes(value)
 }
 
 /**

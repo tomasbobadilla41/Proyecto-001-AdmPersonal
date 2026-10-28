@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
-import type { Expense } from '../types/finance'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { toast } from 'sonner'
+import { isFixedExpenseCategory, type Expense, type ExpenseCategory, type ExpenseType } from '../types/finance'
 import { CategoryBadge } from '../components/expenses/CategoryBadge'
 import { ExpenseTypeBadge } from '../components/expenses/ExpenseTypeBadge'
 import { MonthYearSelector } from '../components/expenses/MonthYearSelector'
@@ -9,10 +10,12 @@ import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
+import { parseInvoicePdf } from '../services/parseInvoiceApi'
 import { formatMoney } from '../utils/currency'
 import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finance'
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
+type InvoicePrefill = { expenseType: ExpenseType; category?: ExpenseCategory; monto?: number }
 
 interface ExpensesPageProps {
   /** Lleva al Centro de Pagos — usado por el aviso de "gasto fijo que se repite" dentro del formulario de carga. */
@@ -23,6 +26,12 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   const { exchangeRates } = useExchangeRateStore()
   const { expenses, isLoading, addExpenses, updateExpense, removeExpense } = useExpenseStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
+  // Monto/categoría detectados al subir una factura (PDF) — precargan el
+  // formulario de carga, que hace de pantalla de revisión: nada se guarda
+  // hasta que confirmes "Guardar gasto" ahí.
+  const [invoicePrefill, setInvoicePrefill] = useState<InvoicePrefill | undefined>(undefined)
+  const [isReadingInvoice, setIsReadingInvoice] = useState(false)
+  const invoiceInputRef = useRef<HTMLInputElement>(null)
 
   // Arranca en el mes calendario real de hoy — igual que el Dashboard —, no
   // en el mes del gasto "más reciente" cargado. Con cuotas/recurrencia una
@@ -56,6 +65,34 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
       void addExpenses(expenses)
     }
     setFormState(null)
+    setInvoicePrefill(undefined)
+  }
+
+  function handleCloseForm() {
+    setFormState(null)
+    setInvoicePrefill(undefined)
+  }
+
+  async function handleInvoiceFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setIsReadingInvoice(true)
+    try {
+      const data = await parseInvoicePdf(file)
+      setInvoicePrefill({
+        expenseType: 'FIJO',
+        category: isFixedExpenseCategory(data.categoria_sugerida) ? data.categoria_sugerida : undefined,
+        monto: data.monto_total,
+      })
+      setFormState({ mode: 'create' })
+      toast.success('Factura leída — revisá los datos antes de guardar.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al leer la factura. Probá de nuevo en unos segundos.')
+    } finally {
+      setIsReadingInvoice(false)
+    }
   }
 
   return (
@@ -65,7 +102,25 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
           <h2 className="text-xl font-semibold text-ink">Gastos</h2>
           <p className="text-sm text-muted">Detalle de gastos por mes, como en la planilla</p>
         </div>
-        <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
+        <div className="flex items-center gap-3">
+          <input
+            ref={invoiceInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleInvoiceFileChange}
+          />
+          <button
+            type="button"
+            onClick={() => !isReadingInvoice && invoiceInputRef.current?.click()}
+            disabled={isReadingInvoice}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-line disabled:opacity-50"
+          >
+            {isReadingInvoice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {isReadingInvoice ? 'Leyendo factura…' : 'Subir factura (PDF)'}
+          </button>
+          <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -150,9 +205,10 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
       <FloatingActionButton icon={Plus} label="Cargar gasto" onClick={() => setFormState({ mode: 'create' })} />
       <ExpenseFormDrawer
         isOpen={formState !== null}
-        onClose={() => setFormState(null)}
+        onClose={handleCloseForm}
         onSubmit={handleSubmit}
         initialExpense={formState?.mode === 'edit' ? formState.expense : undefined}
+        prefill={formState?.mode === 'create' ? invoicePrefill : undefined}
         onGoToPayments={onGoToPayments}
       />
     </div>

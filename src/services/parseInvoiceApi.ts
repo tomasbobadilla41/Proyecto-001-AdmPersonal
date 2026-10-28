@@ -44,18 +44,15 @@ async function parseWithGemini(file: File): Promise<GeminiInvoiceData> {
 }
 
 /**
- * Manda un PDF de factura a Gemini (vía la Edge Function `parse-invoice`) y
- * devuelve los datos estructurados ya extraídos. La Edge Function reintenta
- * sola ante un 503/429 transitorio, y el timeout acá es la última red de
- * seguridad por si la llamada entera se cuelga.
- *
- * Si Gemini termina fallando igual (ej. se agotó la cuota diaria gratuita —
- * ahí reintentar no sirve de nada hasta que resetee), antes de rendirse
- * prueba un fallback sin IA: extrae el texto del PDF en el navegador
- * (`extractPdfText`) y busca el monto/cliente con patrones fijos por
- * proveedor conocido (`extractInvoiceWithRegex`). Solo cubre a los
- * proveedores que ya se vieron — para cualquier otro, el fallback no
- * encuentra nada y se propaga el error original de Gemini.
+ * Extrae monto/cliente/categoría de un PDF de factura. Prueba primero sin
+ * IA: extrae el texto del PDF en el navegador (`extractPdfText`) y lo
+ * matchea contra patrones fijos por proveedor conocido
+ * (`extractInvoiceWithRegex`) — gratis, instantáneo, 100% determinístico. Si
+ * el proveedor todavía no tiene patrón escrito (factura nueva/desconocida),
+ * recién ahí cae a Gemini (vía la Edge Function `parse-invoice`) como red de
+ * seguridad genérica. La Edge Function reintenta sola ante un 503/429
+ * transitorio, y el timeout acá es la última red de seguridad por si la
+ * llamada entera se cuelga.
  */
 export async function parseInvoicePdf(file: File): Promise<ParsedInvoice> {
   if (file.type !== 'application/pdf') {
@@ -66,17 +63,12 @@ export async function parseInvoicePdf(file: File): Promise<ParsedInvoice> {
     throw new Error('El PDF supera el tamaño máximo permitido (10 MB).')
   }
 
-  try {
-    const data = await parseWithGemini(file)
-    return { ...data, source: 'ia' }
-  } catch (geminiError) {
-    const text = await extractPdfText(file).catch(() => null)
-    const fallback = text ? extractInvoiceWithRegex(text) : null
-
-    if (fallback) {
-      return { ...fallback, source: 'regex' }
-    }
-
-    throw geminiError instanceof Error ? geminiError : new Error('Error al leer factura. Probá de nuevo en unos segundos.')
+  const text = await extractPdfText(file).catch(() => null)
+  const regexResult = text ? extractInvoiceWithRegex(text) : null
+  if (regexResult) {
+    return { ...regexResult, source: 'regex' }
   }
+
+  const data = await parseWithGemini(file)
+  return { ...data, source: 'ia' }
 }
