@@ -46,6 +46,8 @@ export function PropertyServiceFormDrawer({
     event.preventDefault()
     if (!serviceName.trim() || !accountNumber.trim()) return
 
+    // No llama a `onClose` acá a propósito: `onSubmit` dispara un alta/edición
+    // async contra Supabase, y el padre es quien decide cuándo cerrar.
     onSubmit({
       id: initialConfig?.id ?? `psvc-${Date.now()}`,
       propertyId,
@@ -53,7 +55,6 @@ export function PropertyServiceFormDrawer({
       accountNumber: accountNumber.trim(),
       isAutoDebit,
     })
-    onClose()
   }
 
   return (

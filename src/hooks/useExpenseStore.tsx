@@ -3,11 +3,7 @@ import { toast } from 'sonner'
 import type { Expense } from '../types/finance'
 import { useAuth } from './useAuth'
 import { deleteExpenseRow, fetchExpenses, insertExpenses, updateExpenseRow } from '../services/expensesApi'
-
-/** Reemplaza el elemento con ese `id`, o lo deja igual si no lo encuentra. */
-function replaceById<T extends { id: string }>(items: T[], updated: T): T[] {
-  return items.map((item) => (item.id === updated.id ? updated : item))
-}
+import { useRemoveAction, useUpdateAction } from './storeHelpers'
 
 interface ExpenseStore {
   expenses: Expense[]
@@ -83,31 +79,8 @@ export function ExpenseStoreProvider({ children }: { children: ReactNode }) {
     [userId],
   )
 
-  const updateExpense = useCallback(
-    async (expense: Expense) => {
-      if (!userId) return false
-      try {
-        const updated = await updateExpenseRow(expense, userId)
-        setExpenses((prev) => replaceById(prev, updated))
-        return true
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el gasto.')
-        return false
-      }
-    },
-    [userId],
-  )
-
-  const removeExpense = useCallback(async (id: string) => {
-    try {
-      await deleteExpenseRow(id)
-      setExpenses((prev) => prev.filter((e) => e.id !== id))
-      return true
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar el gasto.')
-      return false
-    }
-  }, [])
+  const updateExpense = useUpdateAction(setExpenses, userId, updateExpenseRow, 'No se pudo actualizar el gasto.')
+  const removeExpense = useRemoveAction(setExpenses, deleteExpenseRow, 'No se pudo eliminar el gasto.')
 
   const value = useMemo<ExpenseStore>(
     () => ({ expenses, isLoading, addExpenses, updateExpense, removeExpense }),

@@ -245,7 +245,10 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
       <PropertyFormDrawer
         isOpen={isEditingProperty}
         onClose={() => setIsEditingProperty(false)}
-        onSubmit={updateProperty}
+        onSubmit={(updated) => {
+          void updateProperty(updated)
+          setIsEditingProperty(false)
+        }}
         initialProperty={property}
       />
       <PropertyServiceFormDrawer

@@ -142,6 +142,22 @@ El Dashboard (`src/pages/DashboardPage.tsx`) ya no muestra siempre el mes real d
 - `ExchangeRateInput` y `SalaryCard` (cargar tipo de cambio / sueldo) siguen atados a `current.mes`/`current.anio` como antes — como efecto secundario lindo, esto ahora permite cargar/corregir el tipo de cambio o el sueldo de un mes pasado, no solo del actual.
 - "Accesos Rápidos de Pago" y demás widgets que no dependen del mes (catálogo de servicios, etc.) no cambian con el selector — es esperable, no leen `current`.
 
+## Auditoría de arquitectura (2026-10-15) y arreglos aplicados
+
+Se le pidió a un agente que auditara todo el repo buscando limitantes a futuro antes de seguir sumando features. De los hallazgos, se atacaron los dos más críticos:
+
+1. **Patrón "cierra antes de que termine el async"**: `ServiceConfigFormDrawer` tenía un bug real (ver sección del Lector de Facturas) donde el drawer llamaba a `onClose()` inmediatamente después de `onSubmit()`, pisando estado que el padre necesitaba leer recién cuando terminaba el alta async. La auditoría encontró el mismo patrón riesgoso en otros 4 componentes: `ExpenseFormDrawer`, `PropertyFormDrawer`, `PropertyServiceFormDrawer`, `LeaseContractFormDrawer`. Se normalizó en los cinco: **el hijo nunca cierra solo, solo llama a `onSubmit`** — el padre es siempre el único responsable de cerrar. En la mayoría de los casos el padre ya cerraba por su cuenta (sin cambios); `PropertyFormDrawer` era la excepción — sus dos usos (`RealEstateDashboardView.tsx`, `PropertyDetailView.tsx`) dependían enteramente del `onClose()` interno del hijo, así que hubo que envolver sus `onSubmit` ahí también para que siguieran cerrando.
+2. **`expenses` sin `CHECK` constraints**: migración `011_expenses_check_constraints.sql` agrega validación a nivel de Postgres para `type` (`FIJO`/`FLEXIBLE`), `currency` (`ARS`/`USD`) y `category` (la lista completa de `EXPENSE_CATEGORIES`, FIJO + FLEXIBLE) — antes eran `TEXT` libres, validados solo del lado del cliente. **Hay que mantener la lista de categorías del CHECK sincronizada a mano** si se agrega una categoría nueva en `src/types/finance.ts` (mismo problema de fuente de verdad duplicada que ya existe entre el frontend y `parse-invoice`).
+
+**Se evaluó agregar ESLint y quedó pendiente**: el proyecto usa TypeScript 7 (la versión nueva basada en Go), y `typescript-eslint` todavía no la soporta — tira un error explícito al arrancar, no es solo un aviso de peer dependency (ver [issue #10940](https://github.com/typescript-eslint/typescript-eslint/issues/10940), abierto y sin resolver al momento de este intento). Retomar cuando typescript-eslint sume soporte, sin downgradear el TypeScript del proyecto solo para esto.
+
+**Quedó anotado para más adelante (no atacado todavía)**:
+- Sigue habiendo `window.confirm()` nativo para borrar en 5 archivos (`PaymentsHubPage`, `ExpensesPage`, `CryptoTab`, `CedearTab`, `PropertyDetailView`) — además de ser la única UI no consistente con el resto del design system, bloquea la automatización de browser para QA (nos pasó varias veces en esta conversación).
+- Triple duplicación de la lista de categorías fijas (`finance.ts`, `parse-invoice/index.ts`, y strings sueltos sin tipar en `invoiceRegexFallback.ts`).
+- Los stores traen la tabla completa sin paginar (`select('*')`) — no importa hoy, va a importar con 1-2 años de histórico de `expenses`.
+- `DataMigrationCenter.tsx` es el único componente con shadcn `Card`/`Button` en vez de los tokens Tailwind custom del resto de la app.
+- No hay ningún test automatizado (unit/integration/e2e) en el repo — todo el QA hasta ahora fue manual vía browser automation.
+
 ## Posibles próximos pasos (inferidos, no confirmados con el usuario)
 
 - Revisar si hace falta un mecanismo de migración de datos para usuarios que todavía tengan información vieja en `localStorage` del navegador (distinto del `DataMigrationCenter`, que hoy es solo import/export CSV/PDF de gastos, no una migración de datos legacy).

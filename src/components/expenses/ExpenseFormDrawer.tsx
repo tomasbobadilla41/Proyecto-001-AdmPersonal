@@ -161,8 +161,9 @@ export function ExpenseFormDrawer({
       recurringGroupId,
     }))
 
+    // No llama a `onClose` acá a propósito: `onSubmit` dispara un alta/edición
+    // async contra Supabase, y el padre es quien decide cuándo cerrar.
     onSubmit(expenses)
-    onClose()
   }
 
   return (
