@@ -37,6 +37,11 @@ export type FlexibleExpenseCategory = (typeof EXPENSE_CATEGORIES.FLEXIBLE)[numbe
 /** Subcategoría de gasto: unión de las categorías Fijas y Flexibles. */
 export type ExpenseCategory = FixedExpenseCategory | FlexibleExpenseCategory
 
+/** Angosta un string suelto (ej: `categoria_sugerida` de un lector de facturas) a `FixedExpenseCategory` si es una de las categorías FIJO válidas. */
+export function isFixedExpenseCategory(value: string): value is FixedExpenseCategory {
+  return (EXPENSE_CATEGORIES.FIJO as readonly string[]).includes(value)
+}
+
 export interface Expense {
   id: string
   fecha: Date
