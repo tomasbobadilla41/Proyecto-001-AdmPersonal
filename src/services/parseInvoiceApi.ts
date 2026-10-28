@@ -1,14 +1,13 @@
 import { supabase } from '../lib/supabase'
 import { extractPdfText } from '../utils/pdfText'
 import { extractInvoiceWithRegex } from '../utils/invoiceRegexFallback'
+import { fileToBase64, MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
 
-// Si la función tarda más que esto (red colgada, sesión vencida, lo que sea),
-// se aborta y se muestra un error — nunca debe quedar esperando para siempre.
-const INVOKE_TIMEOUT_MS = 25_000
-
-// Un PDF más pesado que esto puede colgar el navegador al pasarlo a Base64
-// y agotar la memoria de la Edge Function. Mismo límite validado en el servidor.
-const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024
+// La Edge Function puede tardar hasta ~63s en el peor caso (3 intentos a
+// Gemini de 20s + los delays entre reintentos) antes de rendirse sola — este
+// timeout tiene que ser mayor a eso para no cortar la espera antes que el
+// propio servidor termine sus reintentos.
+const INVOKE_TIMEOUT_MS = 70_000
 
 export interface ParsedInvoice {
   monto_total: number
@@ -21,19 +20,6 @@ export interface ParsedInvoice {
 /** Deja solo los dígitos (las facturas suelen formatear el nro. de cuenta con espacios/puntos: "0 151 791 868"). */
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, '')
-}
-
-/** Lee el `File` como Base64 puro (sin el prefijo `data:application/pdf;base64,`). */
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1] ?? '')
-    }
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
 }
 
 interface GeminiInvoiceData {
