@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
-import { Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { CreditCard, Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { isFixedExpenseCategory, type Expense, type ExpenseCategory, type ExpenseType } from '../types/finance'
 import { CategoryBadge } from '../components/expenses/CategoryBadge'
@@ -7,10 +7,14 @@ import { ExpenseTypeBadge } from '../components/expenses/ExpenseTypeBadge'
 import { MonthYearSelector } from '../components/expenses/MonthYearSelector'
 import { ExpensesByTypeChart } from '../components/expenses/ExpensesByTypeChart'
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
+import { CardStatementReviewDrawer } from '../components/expenses/CardStatementReviewDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
 import { parseInvoicePdf } from '../services/parseInvoiceApi'
+import { parseCardStatement, type ParsedCardStatement } from '../utils/cardStatementParser'
+import { extractPdfText } from '../utils/pdfText'
+import { MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
 import { formatMoney } from '../utils/currency'
 import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finance'
 
@@ -32,6 +36,12 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   const [invoicePrefill, setInvoicePrefill] = useState<InvoicePrefill | undefined>(undefined)
   const [isReadingInvoice, setIsReadingInvoice] = useState(false)
   const invoiceInputRef = useRef<HTMLInputElement>(null)
+
+  // Resumen de tarjeta: a diferencia de la factura (un monto), acá se leen varios
+  // consumos — se revisan en `CardStatementReviewDrawer`, no en `ExpenseFormDrawer`.
+  const [cardStatementData, setCardStatementData] = useState<ParsedCardStatement | null>(null)
+  const [isReadingCardStatement, setIsReadingCardStatement] = useState(false)
+  const cardStatementInputRef = useRef<HTMLInputElement>(null)
 
   // Arranca en el mes calendario real de hoy — igual que el Dashboard —, no
   // en el mes del gasto "más reciente" cargado. Con cuotas/recurrencia una
@@ -95,6 +105,42 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
     }
   }
 
+  async function handleCardStatementFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Solo se admiten archivos PDF.')
+      return
+    }
+    if (file.size > MAX_PDF_SIZE_BYTES) {
+      toast.error('El PDF supera el tamaño máximo permitido (10 MB).')
+      return
+    }
+
+    setIsReadingCardStatement(true)
+    try {
+      const text = await extractPdfText(file)
+      const parsed = parseCardStatement(text)
+      if (!parsed) {
+        toast.error('No reconocimos el formato de este resumen de tarjeta.')
+        return
+      }
+      setCardStatementData(parsed)
+      toast.success('Resumen leído — revisá los consumos antes de importar.')
+    } catch {
+      toast.error('Error al leer el resumen. Probá de nuevo en unos segundos.')
+    } finally {
+      setIsReadingCardStatement(false)
+    }
+  }
+
+  function handleCardStatementConfirm(expenses: Expense[]) {
+    void addExpenses(expenses)
+    setCardStatementData(null)
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -118,6 +164,22 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
           >
             {isReadingInvoice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {isReadingInvoice ? 'Leyendo factura…' : 'Subir factura (PDF)'}
+          </button>
+          <input
+            ref={cardStatementInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleCardStatementFileChange}
+          />
+          <button
+            type="button"
+            onClick={() => !isReadingCardStatement && cardStatementInputRef.current?.click()}
+            disabled={isReadingCardStatement}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-line disabled:opacity-50"
+          >
+            {isReadingCardStatement ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+            {isReadingCardStatement ? 'Leyendo resumen…' : 'Subir resumen de tarjeta (PDF)'}
           </button>
           <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
         </div>
@@ -210,6 +272,12 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
         initialExpense={formState?.mode === 'edit' ? formState.expense : undefined}
         prefill={formState?.mode === 'create' ? invoicePrefill : undefined}
         onGoToPayments={onGoToPayments}
+      />
+      <CardStatementReviewDrawer
+        isOpen={cardStatementData !== null}
+        onClose={() => setCardStatementData(null)}
+        onConfirm={handleCardStatementConfirm}
+        parsed={cardStatementData}
       />
     </div>
   )

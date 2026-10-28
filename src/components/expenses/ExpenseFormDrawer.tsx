@@ -3,7 +3,7 @@ import { ArrowRight, X } from 'lucide-react'
 import { EXPENSE_CATEGORIES, type Expense, type ExpenseCategory, type ExpenseType } from '../../types/finance'
 import type { Currency } from '../../types/money'
 import { useStreamingServicesStore } from '../../hooks/useStreamingServicesStore'
-import { addMonthsUTC, todayISODate } from '../../utils/finance'
+import { addMonthsUTC, toDateOnlyUTC, todayISODate } from '../../utils/finance'
 import { DEFAULT_STREAMING_SERVICES } from '../../utils/streamingServices'
 import { StreamingServiceField } from './StreamingServiceField'
 
@@ -37,13 +37,6 @@ const DEFAULT_EXPENSE_TYPE: ExpenseType = 'FIJO'
 const DEFAULT_CATEGORY: ExpenseCategory = EXPENSE_CATEGORIES.FIJO[0]
 /** Tope de meses que se pueden generar de una sola carga (recurrente o en cuotas). */
 const MAX_REPEAT_MONTHS = 24
-
-function toDateInputValue(date: Date): string {
-  const year = date.getUTCFullYear()
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 export function ExpenseFormDrawer({
   isOpen,
@@ -84,7 +77,7 @@ export function ExpenseFormDrawer({
       setExpenseType(initialExpense.expenseType ?? DEFAULT_EXPENSE_TYPE)
       setCategory(initialExpense.category ?? DEFAULT_CATEGORY)
       setSubcategoria(initialExpense.subcategoria ?? '')
-      setFecha(toDateInputValue(initialExpense.fecha))
+      setFecha(toDateOnlyUTC(initialExpense.fecha))
       setDescripcion(initialExpense.descripcion)
       // Editar un gasto puntual nunca dispara una nueva carga en cuotas.
       setIsInstallment(false)
