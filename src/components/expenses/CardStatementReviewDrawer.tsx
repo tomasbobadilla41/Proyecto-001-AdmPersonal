@@ -16,6 +16,8 @@ interface ReviewRow {
   key: string
   included: boolean
   fecha: string
+  /** Fecha de la compra original (informativa, no editable) — ver nota en `rowsFromParsed`. */
+  fechaCompraOriginal: Date
   descripcion: string
   category: ExpenseCategory
   monto: string
@@ -29,10 +31,19 @@ const DEFAULT_CATEGORY: ExpenseCategory = 'Tarjeta de Crédito'
 const RECONCILIATION_TOLERANCE = 0.01
 
 function rowsFromParsed(parsed: ParsedCardStatement): ReviewRow[] {
+  // La fecha que figura en cada fila del resumen es la de la compra
+  // original, no la de este cobro — una compra en cuotas repite la misma
+  // fecha de compra en los resúmenes de todos los meses en que todavía
+  // tiene cuotas pendientes. Para que el gasto cuente en el mes en que
+  // realmente se paga (y así el Dashboard lo vea en el mes correcto), se usa
+  // el período del propio resumen como fecha por defecto, no la de la fila.
+  const fechaFacturacion = parsed.vencimiento ?? parsed.cierre
+
   return parsed.items.map((item, index) => ({
     key: `${index}-${item.descripcion}`,
     included: true,
-    fecha: toDateOnlyUTC(item.fecha),
+    fecha: toDateOnlyUTC(fechaFacturacion ?? item.fecha),
+    fechaCompraOriginal: item.fecha,
     descripcion: item.descripcion,
     category: DEFAULT_CATEGORY,
     monto: String(item.monto),
@@ -147,9 +158,10 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed }
                   onChange={(e) => updateRow(row.key, { descripcion: e.target.value })}
                   className={INPUT_CLASSNAME}
                 />
-                {row.cuotaActual && row.cuotaTotal && (
-                  <span className="text-xs text-faint">Cuota {row.cuotaActual}/{row.cuotaTotal}</span>
-                )}
+                <span className="text-xs text-faint">
+                  {row.cuotaActual && row.cuotaTotal && `Cuota ${row.cuotaActual}/${row.cuotaTotal} · `}
+                  Compra original: {formatDateAR(row.fechaCompraOriginal)}
+                </span>
               </div>
 
               <input
