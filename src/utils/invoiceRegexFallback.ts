@@ -38,24 +38,44 @@ const PROVIDER_PATTERNS: ProviderPattern[] = [
     amount: /TOTAL A PAGAR[\s\S]{0,60}?\$\s*([\d.,]+)/i,
     accountNumber: /N[uú]mero de cliente[\s\S]{0,80}?(\d{8,20})/i,
   },
+  {
+    // Liquidación de expensas de S.I.P.A.C. (admin "ADMINISTRACION DEL
+    // CARMEN"): es una tabla con una fila por unidad del consorcio, no un
+    // monto único — el `amount` ancla en el apellido del usuario y el
+    // código de su unidad para no agarrar el total de TODO el edificio por
+    // error (¡21x más grande que el monto real!). Es la única entrada acá
+    // atada a un dato personal en vez del nombre del proveedor — si cambia
+    // de unidad o de administración, este patrón deja de reconocer el PDF.
+    categoria_sugerida: 'Expensas',
+    detect: /ESTADO DE CUENTAS Y PRORRATEO|S\.I\.P\.A\.C\./i,
+    amount: /BOBADILLA[\s\S]*?(-?[\d.]+,\d{2})\s+011\b/i,
+  },
 ]
 
-/** Extrae monto/cliente/categoría del texto de una factura con patrones fijos, sin IA. `null` si no reconoce al proveedor o no encuentra el monto. */
+/**
+ * Extrae monto/cliente/categoría del texto de una factura con patrones fijos, sin IA. `null` si ningún proveedor
+ * reconoce el texto. Prueba cada proveedor cuyo `detect` matchea, en orden — si su `amount` no encuentra nada (por
+ * ej. porque el texto solo lo nombra de paso, como "Edenor" dentro del detalle de proveedores de una liquidación de
+ * expensas) sigue probando el resto en vez de rendirse ahí.
+ */
 export function extractInvoiceWithRegex(text: string): RegexInvoiceData | null {
-  const provider = PROVIDER_PATTERNS.find((p) => p.detect.test(text))
-  if (!provider) return null
+  for (const provider of PROVIDER_PATTERNS) {
+    if (!provider.detect.test(text)) continue
 
-  const amountMatch = text.match(provider.amount)
-  if (!amountMatch) return null
+    const amountMatch = text.match(provider.amount)
+    if (!amountMatch) continue
 
-  const monto_total = parseArgentineAmount(amountMatch[1])
-  if (!monto_total) return null
+    const monto_total = parseArgentineAmount(amountMatch[1])
+    if (!monto_total) continue
 
-  const accountMatch = provider.accountNumber ? text.match(provider.accountNumber) : null
+    const accountMatch = provider.accountNumber ? text.match(provider.accountNumber) : null
 
-  return {
-    monto_total,
-    numero_cliente: accountMatch?.[1]?.trim() ?? '',
-    categoria_sugerida: provider.categoria_sugerida,
+    return {
+      monto_total,
+      numero_cliente: accountMatch?.[1]?.trim() ?? '',
+      categoria_sugerida: provider.categoria_sugerida,
+    }
   }
+
+  return null
 }
