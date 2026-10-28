@@ -14,7 +14,12 @@ import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finan
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 
-export function ExpensesPage() {
+interface ExpensesPageProps {
+  /** Lleva al Centro de Pagos — usado por el aviso de "gasto fijo que se repite" dentro del formulario de carga. */
+  onGoToPayments: () => void
+}
+
+export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   const { exchangeRates } = useExchangeRateStore()
   const { expenses, isLoading, addExpenses, updateExpense, removeExpense } = useExpenseStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
@@ -63,8 +68,8 @@ export function ExpensesPage() {
         <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="overflow-x-auto rounded-2xl border border-line bg-panel lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="overflow-x-auto rounded-2xl border border-line bg-panel xl:col-span-2">
           <table className="w-full text-left text-sm">
             <thead className="bg-panel/70 text-muted">
               <tr>
@@ -100,7 +105,9 @@ export function ExpensesPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{expense.descripcion}</td>
+                  <td className="max-w-[260px] truncate px-4 py-3" title={expense.descripcion}>
+                    {expense.descripcion}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-medium">
                     {formatMoney({ amount: expense.monto, currency: expense.moneda })}
                   </td>
@@ -146,6 +153,7 @@ export function ExpensesPage() {
         onClose={() => setFormState(null)}
         onSubmit={handleSubmit}
         initialExpense={formState?.mode === 'edit' ? formState.expense : undefined}
+        onGoToPayments={onGoToPayments}
       />
     </div>
   )

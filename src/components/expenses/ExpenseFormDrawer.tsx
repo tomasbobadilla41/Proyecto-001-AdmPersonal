@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import { X } from 'lucide-react'
+import { ArrowRight, X } from 'lucide-react'
 import { EXPENSE_CATEGORIES, type Expense, type ExpenseCategory, type ExpenseType } from '../../types/finance'
 import type { Currency } from '../../types/money'
 import { useStreamingServicesStore } from '../../hooks/useStreamingServicesStore'
@@ -10,7 +10,7 @@ import { StreamingServiceField } from './StreamingServiceField'
 interface ExpenseFormDrawerProps {
   isOpen: boolean
   onClose: () => void
-  /** Puede ser más de un `Expense` si se cargó como gasto recurrente. */
+  /** Puede ser más de un `Expense` si se cargó en cuotas. */
   onSubmit: (expenses: Expense[]) => void
   /** Si se pasa, el formulario edita ese gasto; si no, carga uno nuevo. */
   initialExpense?: Expense
@@ -19,6 +19,13 @@ interface ExpenseFormDrawerProps {
    * Pago" en el Centro de Pagos). Se ignora si `initialExpense` está presente.
    */
   prefill?: { expenseType: ExpenseType; category: ExpenseCategory }
+  /**
+   * Lleva al Centro de Pagos y cierra el drawer. Un gasto Fijo que se repite
+   * todos los meses (alquiler, luz, gimnasio) se carga ahí como servicio —
+   * con vencimiento, link de pago y lectura de factura por IA — en vez de
+   * con el viejo toggle "recurrente" de este formulario.
+   */
+  onGoToPayments: () => void
 }
 
 const INPUT_CLASSNAME =
@@ -37,7 +44,14 @@ function toDateInputValue(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, prefill }: ExpenseFormDrawerProps) {
+export function ExpenseFormDrawer({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialExpense,
+  prefill,
+  onGoToPayments,
+}: ExpenseFormDrawerProps) {
   const isEditMode = Boolean(initialExpense)
   const { customStreamingServices, addStreamingService } = useStreamingServicesStore()
 
@@ -48,8 +62,6 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
   const [subcategoria, setSubcategoria] = useState('')
   const [fecha, setFecha] = useState(todayISODate())
   const [descripcion, setDescripcion] = useState('')
-  const [isRecurring, setIsRecurring] = useState(false)
-  const [recurringMonths, setRecurringMonths] = useState('1')
   const [isInstallment, setIsInstallment] = useState(false)
   const [installmentCount, setInstallmentCount] = useState('1')
 
@@ -73,9 +85,7 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
       setSubcategoria(initialExpense.subcategoria ?? '')
       setFecha(toDateInputValue(initialExpense.fecha))
       setDescripcion(initialExpense.descripcion)
-      // Editar un gasto puntual nunca dispara una nueva carga recurrente ni en cuotas.
-      setIsRecurring(false)
-      setRecurringMonths('1')
+      // Editar un gasto puntual nunca dispara una nueva carga en cuotas.
       setIsInstallment(false)
       setInstallmentCount('1')
     } else {
@@ -86,8 +96,6 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
       setSubcategoria('')
       setFecha(todayISODate())
       setDescripcion('')
-      setIsRecurring(false)
-      setRecurringMonths('1')
       setIsInstallment(false)
       setInstallmentCount('1')
     }
@@ -105,31 +113,10 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
     if (nextCategory !== STREAMING_CATEGORY) {
       setSubcategoria('')
     }
-    // El checkbox de recurrencia solo tiene sentido para Fijo: si se pasa a
-    // Flexible, se apaga (no queda "activado" de forma invisible).
-    if (nextType !== 'FIJO') {
-      setIsRecurring(false)
-      setRecurringMonths('1')
-    }
-  }
-
-  // "Recurrente" y "en cuotas" son modos alternativos (ambos generan varios
-  // meses, pero con lógica distinta): activar uno apaga el otro para no
-  // dejar un estado ambiguo (ej: dos cantidades de meses conflictivas).
-  function handleRecurringToggle(checked: boolean) {
-    setIsRecurring(checked)
-    if (checked) {
-      setIsInstallment(false)
-      setInstallmentCount('1')
-    }
   }
 
   function handleInstallmentToggle(checked: boolean) {
     setIsInstallment(checked)
-    if (checked) {
-      setIsRecurring(false)
-      setRecurringMonths('1')
-    }
   }
 
   function handleCategoryChange(event: ChangeEvent<HTMLSelectElement>) {
@@ -148,18 +135,12 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
 
     const baseDescripcion = descripcion.trim() || category
 
-    // "En cuotas" y "recurrente" nunca están activos a la vez (ver los
-    // toggles), pero por si acaso: cuotas tiene prioridad si ambos llegaran
-    // a estar prendidos. Ninguno de los dos aplica al editar un gasto existente.
+    // "En cuotas" no aplica al editar un gasto existente.
     const isInstallmentActive = !isEditMode && isInstallment
-    const isRecurringActive = !isEditMode && !isInstallmentActive && expenseType === 'FIJO' && isRecurring
 
-    let repeatCount = 1
-    if (isInstallmentActive) {
-      repeatCount = Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)
-    } else if (isRecurringActive) {
-      repeatCount = Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_REPEAT_MONTHS)
-    }
+    const repeatCount = isInstallmentActive
+      ? Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)
+      : 1
 
     // Todos los gastos de este lote comparten `recurringGroupId` (si hay más de uno).
     const recurringGroupId = repeatCount > 1 ? `rec-${Date.now()}` : undefined
@@ -259,73 +240,57 @@ export function ExpenseFormDrawer({ isOpen, onClose, onSubmit, initialExpense, p
             </label>
           )}
 
+          {!isEditMode && expenseType === 'FIJO' && (
+            <div className="flex flex-col gap-2 rounded-lg border border-accent/30 bg-accent/5 p-3 text-sm text-ink-soft">
+              <p>
+                ¿Es un gasto fijo que se repite todos los meses (alquiler, luz, gimnasio)? Cargalo como servicio en el
+                Centro de Pagos: queda con vencimiento, link de pago y lectura de factura por IA, y lo registrás mes
+                a mes con el monto real.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onGoToPayments()
+                  onClose()
+                }}
+                className="inline-flex items-center gap-1 self-start text-sm font-semibold text-accent hover:underline"
+              >
+                Ir al Centro de Pagos
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           {!isEditMode && (
-            <div className="flex flex-col gap-3 rounded-lg border border-line bg-app p-3">
-              {expenseType === 'FIJO' && (
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 text-sm text-ink-soft">
-                    <input
-                      type="checkbox"
-                      checked={isRecurring}
-                      onChange={(e) => handleRecurringToggle(e.target.checked)}
-                      className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
-                    />
-                    Es un gasto recurrente
-                  </label>
+            <div className="flex flex-col gap-2 rounded-lg border border-line bg-app p-3">
+              <label className="flex items-center gap-2 text-sm text-ink-soft">
+                <input
+                  type="checkbox"
+                  checked={isInstallment}
+                  onChange={(e) => handleInstallmentToggle(e.target.checked)}
+                  className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                />
+                Es compra en Cuotas
+              </label>
 
-                  {isRecurring && (
-                    <label className="flex flex-col gap-1 text-sm text-ink-soft">
-                      Repetir por X meses
-                      <input
-                        type="number"
-                        min="1"
-                        max={MAX_REPEAT_MONTHS}
-                        step="1"
-                        value={recurringMonths}
-                        onChange={(e) => setRecurringMonths(e.target.value)}
-                        className={INPUT_CLASSNAME}
-                      />
-                      <span className="text-xs text-faint">
-                        Se van a crear {Math.min(Math.max(Number(recurringMonths) || 1, 1), MAX_REPEAT_MONTHS)} gastos
-                        (uno por mes, hasta {MAX_REPEAT_MONTHS}).
-                      </span>
-                    </label>
-                  )}
-                </div>
-              )}
-
-              {expenseType === 'FIJO' && <div className="border-t border-line" />}
-
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2 text-sm text-ink-soft">
+              {isInstallment && (
+                <label className="flex flex-col gap-1 text-sm text-ink-soft">
+                  Cantidad total de cuotas
                   <input
-                    type="checkbox"
-                    checked={isInstallment}
-                    onChange={(e) => handleInstallmentToggle(e.target.checked)}
-                    className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                    type="number"
+                    min="1"
+                    max={MAX_REPEAT_MONTHS}
+                    step="1"
+                    value={installmentCount}
+                    onChange={(e) => setInstallmentCount(e.target.value)}
+                    className={INPUT_CLASSNAME}
                   />
-                  Es compra en Cuotas
+                  <span className="text-xs text-faint">
+                    Ej: "{(descripcion.trim() || category)} (Cuota 1/
+                    {Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)})", uno por mes.
+                  </span>
                 </label>
-
-                {isInstallment && (
-                  <label className="flex flex-col gap-1 text-sm text-ink-soft">
-                    Cantidad total de cuotas
-                    <input
-                      type="number"
-                      min="1"
-                      max={MAX_REPEAT_MONTHS}
-                      step="1"
-                      value={installmentCount}
-                      onChange={(e) => setInstallmentCount(e.target.value)}
-                      className={INPUT_CLASSNAME}
-                    />
-                    <span className="text-xs text-faint">
-                      Ej: "{(descripcion.trim() || category)} (Cuota 1/
-                      {Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)})", uno por mes.
-                    </span>
-                  </label>
-                )}
-              </div>
+              )}
             </div>
           )}
 
