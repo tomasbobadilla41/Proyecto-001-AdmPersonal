@@ -143,7 +143,12 @@ export function ExpenseFormDrawer({
 
     const expenses: Expense[] = Array.from({ length: repeatCount }, (_, index) => ({
       id: initialExpense?.id ?? `exp-${batchTimestamp}-${index}`,
-      fecha: index === 0 ? baseDate : addMonthsUTC(baseDate, index),
+      // En cuotas, la Cuota 1 no se factura el mismo mes de la compra, sino
+      // recién en el resumen de tarjeta del mes siguiente (así lo confirma
+      // un resumen real: una compra del 01-Abr en 6 cuotas recién aparece
+      // como "Cuota 1/6" en el resumen con cierre en mayo). Un gasto único
+      // (no en cuotas) sí se fecha el mismo día que se carga.
+      fecha: isInstallmentActive ? addMonthsUTC(baseDate, index + 1) : baseDate,
       // En cuotas, cada registro se renombra "Descripción (Cuota i/N)"; en
       // los demás casos (recurrente o único), la descripción no cambia.
       descripcion: isInstallmentActive ? `${baseDescripcion} (Cuota ${index + 1}/${repeatCount})` : baseDescripcion,
@@ -282,6 +287,9 @@ export function ExpenseFormDrawer({
                   <span className="text-xs text-faint">
                     Ej: "{(descripcion.trim() || category)} (Cuota 1/
                     {Math.min(Math.max(Number(installmentCount) || 1, 1), MAX_REPEAT_MONTHS)})", uno por mes.
+                  </span>
+                  <span className="text-xs text-faint">
+                    La Cuota 1 se carga el mes siguiente a la fecha de compra (recién ahí la factura la tarjeta).
                   </span>
                 </label>
               )}
