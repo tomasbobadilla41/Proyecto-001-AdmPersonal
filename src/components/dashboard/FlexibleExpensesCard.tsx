@@ -1,6 +1,7 @@
 import { ShoppingBag } from 'lucide-react'
 import { formatMoney } from '../../utils/currency'
 import { StatCard } from '../common/StatCard'
+import { ProgressBar } from '../common/ProgressBar'
 
 interface FlexibleExpensesCardProps {
   /** Suma real de gastos FLEXIBLE del mes, en ARS. */
@@ -17,6 +18,10 @@ export function FlexibleExpensesCard({ total, limiteIdeal }: FlexibleExpensesCar
       <span className="text-2xl font-semibold text-ink">
         {formatMoney({ amount: total, currency: 'ARS' })}
       </span>
+      <ProgressBar
+        value={limiteIdeal > 0 ? (total / limiteIdeal) * 100 : 0}
+        indicatorClassName={isOverLimit ? 'bg-rose-400' : 'bg-orange-400'}
+      />
       <p className={`text-xs ${isOverLimit ? 'text-rose-400' : 'text-faint'}`}>
         Límite ideal (30%): {formatMoney({ amount: limiteIdeal, currency: 'ARS' })}
       </p>

@@ -2,6 +2,8 @@ interface ProgressBarProps {
   /** 0-100. Se clampea igual si viene fuera de rango. */
   value: number
   className?: string
+  /** Color del relleno — por defecto `bg-accent` (ej: pasar `bg-rose-400` para marcar que se pasó de un límite). */
+  indicatorClassName?: string
 }
 
 /**
@@ -9,7 +11,7 @@ interface ProgressBarProps {
  * indicador redondeado) pero sin agregar esa librería (no está instalada en
  * el proyecto) — es un `<div>` con dos capas, usando los tokens de tema.
  */
-export function ProgressBar({ value, className = '' }: ProgressBarProps) {
+export function ProgressBar({ value, className = '', indicatorClassName = 'bg-accent' }: ProgressBarProps) {
   const clamped = Math.min(Math.max(value, 0), 100)
 
   return (
@@ -20,7 +22,7 @@ export function ProgressBar({ value, className = '' }: ProgressBarProps) {
       aria-valuemax={100}
       className={`h-2 w-full overflow-hidden rounded-full bg-line ${className}`}
     >
-      <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${clamped}%` }} />
+      <div className={`h-full rounded-full transition-all ${indicatorClassName}`} style={{ width: `${clamped}%` }} />
     </div>
   )
 }
