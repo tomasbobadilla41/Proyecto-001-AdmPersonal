@@ -1,5 +1,6 @@
 import { Home } from 'lucide-react'
 import { formatMoney } from '../../utils/currency'
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
 import { StatCard } from '../common/StatCard'
 import { ProgressBar } from '../common/ProgressBar'
 
@@ -12,11 +13,12 @@ interface FixedExpensesCardProps {
 
 export function FixedExpensesCard({ total, limiteIdeal }: FixedExpensesCardProps) {
   const isOverLimit = total > limiteIdeal
+  const animatedTotal = useAnimatedNumber(total)
 
   return (
     <StatCard title="Gastos Fijos (50%)" icon={Home} iconClassName="text-blue-400">
       <span className="text-2xl font-semibold text-ink">
-        {formatMoney({ amount: total, currency: 'ARS' })}
+        {formatMoney({ amount: animatedTotal, currency: 'ARS' })}
       </span>
       <ProgressBar
         value={limiteIdeal > 0 ? (total / limiteIdeal) * 100 : 0}

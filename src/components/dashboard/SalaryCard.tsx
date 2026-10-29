@@ -7,6 +7,7 @@ import { toARS, todayISODate } from '../../utils/finance'
 import { parsePayslipPdf, type ParsedPayslip } from '../../services/parsePayslipApi'
 import { useServicesStore } from '../../hooks/useServicesStore'
 import { useExpenseStore } from '../../hooks/useExpenseStore'
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
 import { StatCard } from '../common/StatCard'
 
 const GIMNASIO_CATEGORY = 'Gimnasio'
@@ -77,6 +78,11 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
   const [gymOffer, setGymOffer] = useState<{ service: ServiceConfig; monto: number } | null>(null)
   const [isRegisteringGymPayment, setIsRegisteringGymPayment] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Se calcula acá arriba (no después de los `return` tempranos de abajo) porque los hooks
+  // tienen que llamarse siempre en el mismo orden — con `income` undefined, anima a 0.
+  const totalARS = income ? income.sueldoARS + toARS(income.sueldoUSD, 'USD', tipoCambio) : 0
+  const animatedTotalARS = useAnimatedNumber(totalARS)
 
   function startEditing() {
     setSueldoARS(income ? String(income.sueldoARS) : '')
@@ -248,14 +254,13 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
     )
   }
 
-  const totalARS = income.sueldoARS + toARS(income.sueldoUSD, 'USD', tipoCambio)
   const totalEnUSD = tipoCambio > 0 ? totalARS / tipoCambio : 0
 
   return (
     <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
       <div className="flex items-start justify-between gap-2">
         <span className="text-2xl font-semibold text-ink">
-          {formatMoney({ amount: totalARS, currency: 'ARS' })}
+          {formatMoney({ amount: animatedTotalARS, currency: 'ARS' })}
         </span>
         <button
           type="button"
