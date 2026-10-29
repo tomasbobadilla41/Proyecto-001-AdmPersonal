@@ -28,12 +28,29 @@ interface ReviewRow {
   importRef: string
   /** Ya existe un gasto con este `cardImportRef` — se precarga destildada, pero se puede re-tildar a mano. */
   alreadyImported: boolean
+  /**
+   * Aviso débil (no bloquea nada): existe un gasto del mismo mes y monto parecido que no
+   * vino del lector de resumen (sin `cardImportRef`) — típicamente, una cuota que ya se
+   * cargó a mano con "Es compra en Cuotas" antes de subir el resumen que la vuelve a traer.
+   */
+  possibleDuplicate: boolean
 }
 
 const INPUT_CLASSNAME =
   'w-full rounded-lg border border-line bg-app px-2 py-1.5 text-sm text-ink focus:border-accent focus:outline-none'
 const DEFAULT_CATEGORY: ExpenseCategory = 'Tarjeta de Crédito'
 const RECONCILIATION_TOLERANCE = 0.01
+
+/** Gastos que no vinieron del lector de resumen — contra estos tiene sentido buscar el aviso débil de "posible duplicado". */
+function findPossibleDuplicate(fecha: Date, monto: number, existingExpenses: Expense[]): boolean {
+  return existingExpenses.some(
+    (e) =>
+      !e.cardImportRef &&
+      e.fecha.getUTCMonth() === fecha.getUTCMonth() &&
+      e.fecha.getUTCFullYear() === fecha.getUTCFullYear() &&
+      Math.abs(e.monto - monto) < RECONCILIATION_TOLERANCE,
+  )
+}
 
 function rowsFromParsed(parsed: ParsedCardStatement, existingExpenses: Expense[]): ReviewRow[] {
   // La fecha que figura en cada fila del resumen es la de la compra
@@ -43,6 +60,7 @@ function rowsFromParsed(parsed: ParsedCardStatement, existingExpenses: Expense[]
   // realmente se paga (y así el Dashboard lo vea en el mes correcto), se usa
   // el período del propio resumen como fecha por defecto, no la de la fila.
   const fechaFacturacion = parsed.vencimiento ?? parsed.cierre
+  const fechaImportacion = fechaFacturacion ?? parsed.items[0]?.fecha ?? new Date()
 
   const existingRefs = new Set(
     existingExpenses.map((e) => e.cardImportRef).filter((ref): ref is string => Boolean(ref)),
@@ -63,6 +81,7 @@ function rowsFromParsed(parsed: ParsedCardStatement, existingExpenses: Expense[]
       cuotaTotal: item.cuotaTotal,
       importRef,
       alreadyImported,
+      possibleDuplicate: !alreadyImported && findPossibleDuplicate(fechaImportacion, item.monto, existingExpenses),
     }
   })
 }
@@ -179,6 +198,9 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed, 
                   {row.cuotaActual && row.cuotaTotal && `Cuota ${row.cuotaActual}/${row.cuotaTotal} · `}
                   Compra original: {formatDateAR(row.fechaCompraOriginal)}
                   {row.alreadyImported && <span className="text-amber-400"> · Ya importado</span>}
+                  {row.possibleDuplicate && (
+                    <span className="text-amber-400"> · Posible duplicado: ya tenés un gasto parecido ese mes</span>
+                  )}
                 </span>
               </div>
 
