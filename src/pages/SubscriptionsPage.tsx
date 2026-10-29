@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { Loader2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Expense } from '../types/finance'
@@ -6,7 +6,8 @@ import { useExpenseStore } from '../hooks/useExpenseStore'
 import { useStreamingServicesStore } from '../hooks/useStreamingServicesStore'
 import { DEFAULT_STREAMING_SERVICES } from '../utils/streamingServices'
 import { parseSubscriptionsCsv, type ParsedSubscriptionRow } from '../utils/parseSubscriptionsCsv'
-import { todayISODate } from '../utils/finance'
+import { formatDateAR, todayISODate } from '../utils/finance'
+import { formatMoney } from '../utils/currency'
 
 /** Mismo literal que usa `ExpenseFormDrawer` para la categoría de streaming — no está centralizado en finance.ts, se repite acá. */
 const STREAMING_CATEGORY = 'Streaming (Netflix, YT)' as const
@@ -17,6 +18,27 @@ interface ReviewItem extends ParsedSubscriptionRow {
   /** Ya existe un gasto de Streaming con este mismo nombre este mes — no es un bloqueo, solo un aviso. */
   alreadyLoadedThisMonth: boolean
   selected: boolean
+}
+
+interface ActiveSubscription {
+  title: string
+  monto: number
+  fecha: Date
+}
+
+/** Última carga de cada suscripción (por nombre) — así una recarga mensual reemplaza el monto viejo en vez de listarlo aparte. */
+function getActiveSubscriptions(expenses: Expense[]): ActiveSubscription[] {
+  const latestByTitle = new Map<string, Expense>()
+  for (const expense of expenses) {
+    if (expense.category !== STREAMING_CATEGORY || !expense.subcategoria) continue
+    const current = latestByTitle.get(expense.subcategoria)
+    if (!current || expense.fecha > current.fecha) {
+      latestByTitle.set(expense.subcategoria, expense)
+    }
+  }
+  return Array.from(latestByTitle.values())
+    .map((expense) => ({ title: expense.subcategoria!, monto: expense.monto, fecha: expense.fecha }))
+    .sort((a, b) => b.monto - a.monto)
 }
 
 /**
@@ -35,6 +57,9 @@ export function SubscriptionsPage() {
   const [isConfirming, setIsConfirming] = useState(false)
   const [reviewItems, setReviewItems] = useState<ReviewItem[] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const activeSubscriptions = useMemo(() => getActiveSubscriptions(expenses), [expenses])
+  const totalActive = activeSubscriptions.reduce((sum, sub) => sum + sub.monto, 0)
 
   function buildReviewItems(rows: ParsedSubscriptionRow[]): ReviewItem[] {
     const knownServices = new Set([...DEFAULT_STREAMING_SERVICES, ...customStreamingServices])
@@ -147,6 +172,31 @@ export function SubscriptionsPage() {
         </p>
       </div>
 
+      {activeSubscriptions.length > 0 && (
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-line bg-panel p-5">
+          <h3 className="text-sm font-semibold text-ink">Tus suscripciones activas</h3>
+
+          <div className="flex flex-col gap-2">
+            {activeSubscriptions.map((sub) => (
+              <div
+                key={sub.title}
+                className="flex items-center justify-between gap-3 rounded-lg border border-line bg-app px-3 py-2"
+              >
+                <div>
+                  <p className="text-sm font-medium text-ink">{sub.title}</p>
+                  <p className="text-xs text-faint">Último cargo: {formatDateAR(sub.fecha)}</p>
+                </div>
+                <p className="text-sm font-medium text-ink">{formatMoney({ amount: sub.monto, currency: 'ARS' })}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-line pt-3 text-sm text-muted">
+            Total mensual: <span className="font-semibold text-ink">{formatMoney({ amount: totalActive, currency: 'ARS' })}</span>
+          </div>
+        </div>
+      )}
+
       <div
         onClick={() => !isProcessing && fileInputRef.current?.click()}
         onDragOver={(e) => {
@@ -200,14 +250,14 @@ export function SubscriptionsPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm font-medium text-ink">${item.monto.toFixed(2)}</p>
+                <p className="text-sm font-medium text-ink">{formatMoney({ amount: item.monto, currency: 'ARS' })}</p>
               </label>
             ))}
           </div>
 
           <div className="flex items-center justify-between border-t border-line pt-3">
             <p className="text-sm text-muted">
-              Total seleccionado: <span className="font-semibold text-ink">${totalSelected.toFixed(2)}</span>
+              Total seleccionado: <span className="font-semibold text-ink">{formatMoney({ amount: totalSelected, currency: 'ARS' })}</span>
             </p>
             <div className="flex gap-2">
               <button
