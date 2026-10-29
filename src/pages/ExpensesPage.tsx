@@ -9,6 +9,7 @@ import { ExpensesByTypeChart } from '../components/expenses/ExpensesByTypeChart'
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { CardStatementReviewDrawer } from '../components/expenses/CardStatementReviewDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
+import { TableSkeletonRows } from '../components/common/TableSkeletonRows'
 import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
 import { parseInvoicePdf } from '../services/parseInvoiceApi'
@@ -199,13 +200,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {isLoading && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-faint">
-                    Cargando gastos…
-                  </td>
-                </tr>
-              )}
+              {isLoading && <TableSkeletonRows columns={6} rows={5} />}
               {!isLoading && filteredExpenses.map((expense) => (
                 <tr key={expense.id} className="text-ink-soft">
                   <td className="whitespace-nowrap px-4 py-3 text-muted">
