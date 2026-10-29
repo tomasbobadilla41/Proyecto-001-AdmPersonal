@@ -11,7 +11,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { TabKey } from '../../types/navigation'
-import { ThemeSelector } from './ThemeSelector'
 import { UserNav } from './UserNav'
 
 interface NavItem {
@@ -61,10 +60,6 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
             <NavButton key={item.key} item={item} active={activeTab === item.key} onClick={onTabChange} />
           ))}
         </nav>
-
-        <div className="mt-auto pt-4">
-          <ThemeSelector />
-        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -80,10 +75,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
               <Wallet className="h-5 w-5 text-accent" />
               Adm Personal
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeSelector />
-              <UserNav />
-            </div>
+            <UserNav />
           </div>
           <nav className="flex gap-1 overflow-x-auto border-t border-line px-1">
             {PERSONAL_NAV_ITEMS.map((item) => (
