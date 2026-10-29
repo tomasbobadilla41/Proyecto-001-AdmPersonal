@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { useAuth } from '../../hooks/useAuth'
+import { ThemeSelector } from './ThemeSelector'
 
 /** Menú de usuario (avatar + email + cerrar sesión) en la esquina superior derecha, estilo Google/YouTube. */
 export function UserNav() {
@@ -37,6 +38,11 @@ export function UserNav() {
         <DropdownMenuLabel className="truncate font-normal text-ink" title={email}>
           {email}
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Tema</DropdownMenuLabel>
+        <div className="px-1.5 pb-1">
+          <ThemeSelector />
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
