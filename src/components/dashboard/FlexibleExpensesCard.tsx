@@ -1,5 +1,6 @@
 import { ShoppingBag } from 'lucide-react'
 import { formatMoney } from '../../utils/currency'
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
 import { StatCard } from '../common/StatCard'
 import { ProgressBar } from '../common/ProgressBar'
 
@@ -12,11 +13,12 @@ interface FlexibleExpensesCardProps {
 
 export function FlexibleExpensesCard({ total, limiteIdeal }: FlexibleExpensesCardProps) {
   const isOverLimit = total > limiteIdeal
+  const animatedTotal = useAnimatedNumber(total)
 
   return (
     <StatCard title="Gastos Flexibles (30%)" icon={ShoppingBag} iconClassName="text-orange-400">
       <span className="text-2xl font-semibold text-ink">
-        {formatMoney({ amount: total, currency: 'ARS' })}
+        {formatMoney({ amount: animatedTotal, currency: 'ARS' })}
       </span>
       <ProgressBar
         value={limiteIdeal > 0 ? (total / limiteIdeal) * 100 : 0}
