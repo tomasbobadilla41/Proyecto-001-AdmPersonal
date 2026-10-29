@@ -6,6 +6,7 @@ import { ServiceConfigFormDrawer } from '../components/payments/ServiceConfigFor
 import { RegisterPaymentModal } from '../components/payments/RegisterPaymentModal'
 import { InvoiceDropzone } from '../components/payments/InvoiceDropzone'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
+import { CardSkeleton } from '../components/common/CardSkeleton'
 import { useServicesStore } from '../hooks/useServicesStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
 
@@ -87,8 +88,10 @@ export function PaymentsHubPage() {
       />
 
       {isLoading ? (
-        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
-          Cargando servicios…
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       ) : services.length === 0 ? (
         <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">

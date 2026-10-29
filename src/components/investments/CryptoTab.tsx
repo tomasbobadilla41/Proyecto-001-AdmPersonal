@@ -8,6 +8,7 @@ import { Label } from '../ui/label'
 import { usePortfolioStore } from '../../hooks/usePortfolioStore'
 import { useBinancePrices } from '../../hooks/useBinancePrices'
 import { fetchBinancePrice } from '../../services/binanceApi'
+import { TableSkeletonRows } from '../common/TableSkeletonRows'
 import { formatMoney } from '../../utils/currency'
 import { calculateQuantity, formatPnlPercentage, formatQuantity, getHoldingPnl } from '../../utils/portfolio'
 
@@ -121,13 +122,7 @@ export function CryptoTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-faint">
-                  Cargando inversiones…
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} rows={4} />}
             {!isLoading && cryptoHoldings.map((holding) => {
               const livePrice = livePrices[holding.ticker]
               const currentValue = livePrice !== undefined ? holding.quantity * livePrice : null

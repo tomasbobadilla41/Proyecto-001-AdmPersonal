@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { CedearCombobox } from './CedearCombobox'
+import { TableSkeletonRows } from '../common/TableSkeletonRows'
 import { usePortfolioStore } from '../../hooks/usePortfolioStore'
 import { formatMoney } from '../../utils/currency'
 import { aggregateHoldingsByTicker, calculateQuantity, formatQuantity } from '../../utils/portfolio'
@@ -114,13 +115,7 @@ export function CedearTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-faint">
-                  Cargando inversiones…
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows columns={5} rows={4} />}
             {!isLoading && positions.map((position) => (
               <tr key={position.ticker} className="text-ink-soft">
                 <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">{position.ticker}</td>

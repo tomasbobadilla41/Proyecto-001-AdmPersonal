@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Plus, Receipt, Wallet } from 'lucide-react'
 import { StatCard } from '../components/common/StatCard'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
+import { CardSkeleton } from '../components/common/CardSkeleton'
 import { PropertyCard } from '../components/realestate/PropertyCard'
 import { PropertyFormDrawer } from '../components/realestate/PropertyFormDrawer'
 import { PropertyDetailView } from './PropertyDetailView'
@@ -56,8 +57,10 @@ export function RealEstateDashboardView() {
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
-          Cargando propiedades…
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       ) : properties.length === 0 ? (
         <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
