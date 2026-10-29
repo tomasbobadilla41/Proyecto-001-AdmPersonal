@@ -72,7 +72,7 @@ export function ServiceConfigCard({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-5">
+    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-5 transition-all duration-200 animate-in fade-in-0 hover:border-line-strong hover:shadow-lg">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <Icon className="h-5 w-5 text-blue-400" />
