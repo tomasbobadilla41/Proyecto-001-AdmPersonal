@@ -12,3 +12,12 @@ entrypoint = "./functions/parse-invoice/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/parse-invoice/*.html" ]
+
+[functions.log-apple-pay-expense]
+enabled = true
+# false a propósito acá (al revés que parse-invoice): la llama un Shortcut de
+# iOS, que no tiene cómo mandar un JWT de sesión de Supabase. Se autoriza con
+# el secreto SHORTCUT_SECRET (header x-shortcut-secret) en vez de JWT.
+verify_jwt = false
+import_map = "./functions/log-apple-pay-expense/deno.json"
+entrypoint = "./functions/log-apple-pay-expense/index.ts"
