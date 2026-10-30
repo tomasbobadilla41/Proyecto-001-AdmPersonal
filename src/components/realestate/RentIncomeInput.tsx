@@ -8,20 +8,30 @@ interface RentIncomeInputProps {
   year: number
   /** El `PropertyIncome` de este mes/año, si ya se cargó. */
   existingIncome: PropertyIncome | undefined
+  /** Precio actual del contrato vigente, si hay uno — se usa para precargar el monto cuando todavía no se cargó el ingreso de este mes. */
+  suggestedAmount?: number
   onSave: (income: PropertyIncome) => void
 }
 
 const INPUT_CLASSNAME =
   'w-32 rounded-lg border border-line bg-app px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none'
 
-export function RentIncomeInput({ propertyId, month, year, existingIncome, onSave }: RentIncomeInputProps) {
+export function RentIncomeInput({ propertyId, month, year, existingIncome, suggestedAmount, onSave }: RentIncomeInputProps) {
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState<Currency>('ARS')
 
   useEffect(() => {
-    setAmount(existingIncome ? String(existingIncome.amount) : '')
-    setCurrency(existingIncome?.currency ?? 'ARS')
-  }, [existingIncome, month, year])
+    if (existingIncome) {
+      setAmount(String(existingIncome.amount))
+      setCurrency(existingIncome.currency)
+    } else {
+      // Sin ingreso cargado todavía este mes: precarga el precio del contrato
+      // vigente como punto de partida (sigue siendo editable, no se guarda
+      // nada hasta que se apriete "Guardar").
+      setAmount(suggestedAmount ? String(suggestedAmount) : '')
+      setCurrency('ARS')
+    }
+  }, [existingIncome, suggestedAmount, month, year])
 
   function handleSave() {
     const numero = Number(amount)
@@ -70,6 +80,9 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, onSav
       </button>
       {existingIncome && (
         <span className="pb-2 text-xs text-faint">Ya cargado este mes — se actualiza al guardar de nuevo.</span>
+      )}
+      {!existingIncome && suggestedAmount && (
+        <span className="pb-2 text-xs text-faint">Precargado con el precio del contrato — todavía no se guardó.</span>
       )}
     </div>
   )

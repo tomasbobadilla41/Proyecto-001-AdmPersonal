@@ -22,5 +22,8 @@ dist-ssr
 # Facturas reales usadas para probar el lector de facturas (datos personales)
 factura_prueba/
 
+# Excel de referencia con datos reales de alquileres (datos personales)
+excel/
+
 # Caché local del Supabase CLI
 supabase/.temp/
