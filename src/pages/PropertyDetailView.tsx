@@ -229,6 +229,7 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
           month={month}
           year={year}
           existingIncome={monthIncome}
+          suggestedAmount={activeContract?.currentRentAmount}
           onSave={handleSaveIncome}
         />
 
