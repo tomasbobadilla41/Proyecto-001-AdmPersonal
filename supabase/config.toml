@@ -21,3 +21,12 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/log-apple-pay-expense/deno.json"
 entrypoint = "./functions/log-apple-pay-expense/index.ts"
+
+[functions.sync-mercadopago-expenses]
+enabled = true
+# true: la llama el cron de Postgres (migración 014) mandando el
+# service_role key como Bearer token — un JWT válido, a diferencia del
+# Shortcut de Apple Pay que no puede mandar ninguno.
+verify_jwt = true
+import_map = "./functions/sync-mercadopago-expenses/deno.json"
+entrypoint = "./functions/sync-mercadopago-expenses/index.ts"
