@@ -79,8 +79,14 @@ export function SubscriptionsPage() {
         ...row,
         isNew: !knownServices.has(row.title),
         alreadyLoadedThisMonth,
-        // Pre-tildadas las que no se cargaron este mes todavía; las que sí, se dejan destildadas (el usuario las prende si quiere repetir igual).
-        selected: !alreadyLoadedThisMonth,
+        // Siempre pre-tildada, incluso si ya se cargó este mes — el CSV de
+        // impuestito.com trae todas las suscripciones activas cada vez (viejas
+        // y nuevas), así que destildar las "ya cargadas" por defecto las
+        // excluía en silencio: si el usuario no notaba el checkbox vacío,
+        // "Confirmar" solo guardaba las nuevas. "Ya cargada este mes" queda
+        // como lo que el comentario original decía que era — un aviso, no un
+        // bloqueo — y el usuario destilda a mano si de verdad no quiere repetirla.
+        selected: true,
       }
     })
   }
