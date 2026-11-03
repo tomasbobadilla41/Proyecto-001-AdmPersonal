@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import type { Expense, ServiceConfig } from '../../types/finance'
 import type { Currency } from '../../types/money'
 import { todayISODate } from '../../utils/finance'
@@ -8,7 +8,8 @@ interface RegisterPaymentModalProps {
   /** Servicio para el que se registra el pago de este mes, o `null` si está cerrado. */
   service: ServiceConfig | null
   onClose: () => void
-  onSubmit: (expense: Expense) => void
+  /** Async a propósito: el modal espera a que termine antes de volver a habilitar el botón (y recién ahí se cierra desde el padre) — así un segundo click mientras el primero sigue en vuelo no dispara un segundo insert. */
+  onSubmit: (expense: Expense) => Promise<void>
   /** Monto detectado por el lector de facturas (IA) — si se pasa, precarga el campo en vez de dejarlo vacío. */
   prefillAmount?: number
 }
@@ -25,32 +26,44 @@ const INPUT_CLASSNAME =
 export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount }: RegisterPaymentModalProps) {
   const [monto, setMonto] = useState('')
   const [moneda, setMoneda] = useState<Currency>('ARS')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (service) {
       setMonto(prefillAmount !== undefined ? String(prefillAmount) : '')
       setMoneda('ARS')
+      setIsSubmitting(false)
     }
   }, [service, prefillAmount])
 
   if (!service) return null
   const currentService = service
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     const montoNumerico = Number(monto)
-    if (!montoNumerico || montoNumerico <= 0) return
+    // `isSubmitting` corta un segundo submit mientras el primero sigue en
+    // vuelo (ej: doble click, o Enter repetido por la red lenta) — sin esto
+    // se llegó a guardar el mismo pago dos veces.
+    if (!montoNumerico || montoNumerico <= 0 || isSubmitting) return
 
-    onSubmit({
-      id: `exp-${Date.now()}`,
-      fecha: new Date(todayISODate()),
-      descripcion: currentService.title,
-      monto: montoNumerico,
-      moneda,
-      expenseType: 'FIJO',
-      category: currentService.category,
-      serviceId: currentService.id,
-    })
+    setIsSubmitting(true)
+    try {
+      await onSubmit({
+        id: `exp-${Date.now()}`,
+        fecha: new Date(todayISODate()),
+        descripcion: currentService.title,
+        monto: montoNumerico,
+        moneda,
+        expenseType: 'FIJO',
+        category: currentService.category,
+        serviceId: currentService.id,
+      })
+    } finally {
+      // Si `onSubmit` falló, el padre no cierra el modal — hay que poder
+      // reintentar, así que se vuelve a habilitar el botón.
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -78,6 +91,7 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
                 step="0.01"
                 required
                 autoFocus
+                disabled={isSubmitting}
                 value={monto}
                 onChange={(e) => setMonto(e.target.value)}
                 placeholder="0.00"
@@ -87,6 +101,7 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
                 aria-label="Moneda"
                 value={moneda}
                 onChange={(e) => setMoneda(e.target.value as Currency)}
+                disabled={isSubmitting}
                 className="rounded-lg border border-line bg-app px-2 py-2 text-sm text-ink focus:border-accent focus:outline-none"
               >
                 <option value="ARS">ARS</option>
@@ -97,8 +112,10 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
 
           <button
             type="submit"
-            className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
+            disabled={isSubmitting}
+            className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong disabled:opacity-50"
           >
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Confirmar pago
           </button>
         </form>

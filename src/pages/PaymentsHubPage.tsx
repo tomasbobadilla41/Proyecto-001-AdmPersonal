@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
-import type { FixedExpenseCategory, ServiceConfig } from '../types/finance'
+import type { Expense, FixedExpenseCategory, ServiceConfig } from '../types/finance'
 import { ServiceConfigCard } from '../components/payments/ServiceConfigCard'
 import { ServiceConfigFormDrawer } from '../components/payments/ServiceConfigFormDrawer'
 import { RegisterPaymentModal } from '../components/payments/RegisterPaymentModal'
@@ -9,6 +9,7 @@ import { FloatingActionButton } from '../components/common/FloatingActionButton'
 import { CardSkeleton } from '../components/common/CardSkeleton'
 import { useServicesStore } from '../hooks/useServicesStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
+import { formatMoney } from '../utils/currency'
 
 type ServiceFormState = { mode: 'create' } | { mode: 'edit'; service: ServiceConfig } | null
 
@@ -26,17 +27,41 @@ export function PaymentsHubPage() {
     undefined,
   )
 
-  // `service_id`s con al menos un gasto cargado en el mes/año en curso — define el semáforo de cada tarjeta.
-  const paidServiceIdsThisMonth = useMemo(() => {
+  // `serviceId` -> gasto ya cargado en el mes/año en curso para ese servicio.
+  // Define el semáforo de cada tarjeta y, además, deja detectar si ya hay un
+  // pago registrado antes de abrir "Registrar Pago" de nuevo (ver
+  // `openRegisterPayment`) — así una factura de Expensas subida dos veces no
+  // termina duplicada sin aviso.
+  const expenseThisMonthByServiceId = useMemo(() => {
     const now = new Date()
     const mes = now.getMonth()
     const anio = now.getFullYear()
-    return new Set(
-      expenses
-        .filter((e) => e.serviceId && e.fecha.getUTCMonth() === mes && e.fecha.getUTCFullYear() === anio)
-        .map((e) => e.serviceId as string),
-    )
+    const map = new Map<string, Expense>()
+    for (const e of expenses) {
+      if (e.serviceId && e.fecha.getUTCMonth() === mes && e.fecha.getUTCFullYear() === anio) {
+        map.set(e.serviceId, e)
+      }
+    }
+    return map
   }, [expenses])
+
+  const paidServiceIdsThisMonth = useMemo(
+    () => new Set(expenseThisMonthByServiceId.keys()),
+    [expenseThisMonthByServiceId],
+  )
+
+  /** Punto único por el que se abre "Registrar Pago" (botón manual, factura matcheada en el dropzone, o factura subida directo en la tarjeta) — así el chequeo de duplicado aplica siempre, no solo en uno de los tres caminos. */
+  function openRegisterPayment(service: ServiceConfig, montoDetectado?: number) {
+    const yaRegistrado = expenseThisMonthByServiceId.get(service.id)
+    if (yaRegistrado) {
+      const continuar = window.confirm(
+        `Ya registraste un pago de ${formatMoney({ amount: yaRegistrado.monto, currency: yaRegistrado.moneda })} para "${service.title}" este mes (el ${yaRegistrado.fecha.toLocaleDateString('es-AR')}). ¿Querés registrar otro pago igual?`,
+      )
+      if (!continuar) return
+    }
+    setPrefillAmount(montoDetectado)
+    setPayingService(service)
+  }
 
   function handleDelete(service: ServiceConfig) {
     if (window.confirm(`¿Eliminar el servicio "${service.title}" del directorio?`)) {
@@ -80,10 +105,7 @@ export function PaymentsHubPage() {
 
       <InvoiceDropzone
         services={services}
-        onMatch={(service, montoDetectado) => {
-          setPrefillAmount(montoDetectado)
-          setPayingService(service)
-        }}
+        onMatch={(service, montoDetectado) => openRegisterPayment(service, montoDetectado)}
         onNoMatch={handleInvoiceNoMatch}
       />
 
@@ -109,14 +131,8 @@ export function PaymentsHubPage() {
                 setFormState({ mode: 'edit', service })
               }}
               onDelete={() => handleDelete(service)}
-              onRegisterPayment={() => {
-                setPrefillAmount(undefined)
-                setPayingService(service)
-              }}
-              onInvoiceAmountDetected={(montoDetectado) => {
-                setPrefillAmount(montoDetectado)
-                setPayingService(service)
-              }}
+              onRegisterPayment={() => openRegisterPayment(service)}
+              onInvoiceAmountDetected={(montoDetectado) => openRegisterPayment(service, montoDetectado)}
             />
           ))}
         </div>
@@ -151,10 +167,16 @@ export function PaymentsHubPage() {
           setPayingService(null)
           setPrefillAmount(undefined)
         }}
-        onSubmit={(expense) => {
-          void addExpenses([expense])
-          setPayingService(null)
-          setPrefillAmount(undefined)
+        onSubmit={async (expense) => {
+          // Solo cierra si de verdad se guardó — si falló, `addExpenses` ya
+          // mostró su toast de error y el modal queda abierto para reintentar
+          // (en vez de cerrarse igual y que el usuario, sin feedback, lo
+          // vuelva a intentar desde cero y termine duplicando el gasto).
+          const ok = await addExpenses([expense])
+          if (ok) {
+            setPayingService(null)
+            setPrefillAmount(undefined)
+          }
         }}
       />
     </div>
