@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { isFixedExpenseCategory, type Expense, type ExpenseCategory, type ExpenseType } from '../types/finance'
 import { CategoryBadge } from '../components/expenses/CategoryBadge'
 import { ExpenseTypeBadge } from '../components/expenses/ExpenseTypeBadge'
+import { ExpenseTypeFilter, type ExpenseTypeFilterValue } from '../components/expenses/ExpenseTypeFilter'
 import { MonthYearSelector } from '../components/expenses/MonthYearSelector'
 import { ExpensesByTypeChart } from '../components/expenses/ExpensesByTypeChart'
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
@@ -51,16 +52,25 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   // meses de hoy) y esta pantalla se abría ahí sin avisar.
   const [mes, setMes] = useState(() => new Date().getMonth() + 1)
   const [anio, setAnio] = useState(() => new Date().getFullYear())
+  const [tipoFiltro, setTipoFiltro] = useState<ExpenseTypeFilterValue>('TODOS')
 
   const years = useMemo(() => getAvailableYears(expenses), [expenses])
   const tipoCambio = getExchangeRate(exchangeRates, mes, anio)
 
+  // Sin el filtro de Tipo — el gráfico de Fijos vs Flexibles necesita los dos
+  // tipos siempre presentes para comparar; si le pasáramos `filteredExpenses`
+  // ya filtrado por tipo, se mostraría 100%/0% en vez de la comparación real.
+  const monthExpenses = useMemo(
+    () => expenses.filter((e) => e.fecha.getUTCMonth() + 1 === mes && e.fecha.getUTCFullYear() === anio),
+    [expenses, mes, anio],
+  )
+
   const filteredExpenses = useMemo(
     () =>
-      expenses
-        .filter((e) => e.fecha.getUTCMonth() + 1 === mes && e.fecha.getUTCFullYear() === anio)
+      monthExpenses
+        .filter((e) => tipoFiltro === 'TODOS' || e.expenseType === tipoFiltro)
         .sort((a, b) => b.fecha.getTime() - a.fecha.getTime()),
-    [expenses, mes, anio],
+    [monthExpenses, tipoFiltro],
   )
 
   function handleDelete(expense: Expense) {
@@ -183,6 +193,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
             {isReadingCardStatement ? 'Leyendo resumen…' : 'Subir resumen de tarjeta (PDF)'}
           </button>
           <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
+          <ExpenseTypeFilter value={tipoFiltro} onChange={setTipoFiltro} />
         </div>
       </div>
 
@@ -248,7 +259,9 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
               {!isLoading && filteredExpenses.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-faint">
-                    No hay gastos cargados para este período.
+                    {tipoFiltro === 'TODOS'
+                      ? 'No hay gastos cargados para este período.'
+                      : `No hay gastos ${tipoFiltro === 'FIJO' ? 'fijos' : 'flexibles'} cargados para este período.`}
                   </td>
                 </tr>
               )}
@@ -256,7 +269,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
           </table>
         </div>
 
-        <ExpensesByTypeChart expenses={filteredExpenses} tipoCambio={tipoCambio} />
+        <ExpensesByTypeChart expenses={monthExpenses} tipoCambio={tipoCambio} />
       </div>
 
       <FloatingActionButton icon={Plus} label="Cargar gasto" onClick={() => setFormState({ mode: 'create' })} />
