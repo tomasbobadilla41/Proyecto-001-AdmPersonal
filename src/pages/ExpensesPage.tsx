@@ -159,7 +159,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
           <h2 className="text-xl font-semibold text-ink">Gastos</h2>
           <p className="text-sm text-muted">Detalle de gastos por mes, como en la planilla</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <input
             ref={invoiceInputRef}
             type="file"
