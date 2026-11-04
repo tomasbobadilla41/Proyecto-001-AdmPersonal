@@ -19,7 +19,7 @@ export function ActiveInstallmentsWidget({ expenses }: ActiveInstallmentsWidgetP
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5">
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-5">
       <h3 className="flex items-center gap-2 text-sm font-medium text-muted">
         <CreditCard className="h-4 w-4" />
         Compras en Cuotas Activas

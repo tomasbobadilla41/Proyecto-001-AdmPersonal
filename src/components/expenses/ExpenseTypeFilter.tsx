@@ -10,8 +10,8 @@ interface ExpenseTypeFilterProps {
 /** Mismos colores que `ExpenseTypeBadge`, para que el filtro activo se lea igual que el badge de cada fila. */
 const OPTIONS: { value: ExpenseTypeFilterValue; label: string; activeClassName: string }[] = [
   { value: 'TODOS', label: 'Todos', activeClassName: 'bg-line text-ink' },
-  { value: 'FIJO', label: 'Fijo', activeClassName: 'bg-blue-500/10 text-blue-400' },
-  { value: 'FLEXIBLE', label: 'Flexible', activeClassName: 'bg-orange-500/10 text-orange-400' },
+  { value: 'FIJO', label: 'Fijo', activeClassName: 'bg-fijos/10 text-fijos' },
+  { value: 'FLEXIBLE', label: 'Flexible', activeClassName: 'bg-flexibles/10 text-flexibles' },
 ]
 
 /** Filtro de Tipo (Fijo/Flexible) para la tabla de Gastos — vive junto al selector de mes/año. */

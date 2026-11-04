@@ -5,8 +5,8 @@ interface ExpenseTypeBadgeProps {
 }
 
 const STYLES: Record<ExpenseType, { label: string; className: string }> = {
-  FIJO: { label: 'Fijo', className: 'bg-blue-500/10 text-blue-400' },
-  FLEXIBLE: { label: 'Flexible', className: 'bg-orange-500/10 text-orange-400' },
+  FIJO: { label: 'Fijo', className: 'bg-fijos/10 text-fijos' },
+  FLEXIBLE: { label: 'Flexible', className: 'bg-flexibles/10 text-flexibles' },
 }
 
 export function ExpenseTypeBadge({ expenseType }: ExpenseTypeBadgeProps) {

@@ -72,10 +72,10 @@ export function ServiceConfigCard({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-5 transition-all duration-200 animate-in fade-in-0 hover:border-line-strong hover:shadow-lg">
+    <div className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-5 transition-all duration-200 animate-in fade-in-0 hover:border-line-strong hover:shadow-lg">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Icon className="h-5 w-5 text-blue-400" />
+          <Icon className="h-5 w-5 text-muted" />
           <div>
             <p className="font-medium text-ink">{service.title}</p>
             <p className="text-xs text-faint">
@@ -97,7 +97,7 @@ export function ServiceConfigCard({
             type="button"
             onClick={onDelete}
             aria-label="Eliminar servicio"
-            className="rounded-lg p-1 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+            className="rounded-lg p-1 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -106,7 +106,7 @@ export function ServiceConfigCard({
 
       <span
         className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium ${
-          isPaidThisMonth ? 'bg-emerald-500/10 text-emerald-400' : 'bg-orange-500/10 text-orange-400'
+          isPaidThisMonth ? 'bg-positive/10 text-positive' : 'bg-warning/10 text-warning'
         }`}
       >
         {isPaidThisMonth ? 'Pagado este mes' : 'Pendiente'}
@@ -123,9 +123,9 @@ export function ServiceConfigCard({
             onClick={handleCopy}
             aria-label="Copiar número"
             title="Copiar número"
-            className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-line hover:text-emerald-400"
+            className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-line hover:text-positive"
           >
-            {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+            {copied ? <Check className="h-4 w-4 text-positive" /> : <Copy className="h-4 w-4" />}
           </button>
         </div>
       )}

@@ -1,13 +1,14 @@
 import type { ThemeName } from '../hooks/useTheme'
 
 /**
- * Colores "de chrome" para Recharts (grilla, ejes, tooltip) por tema.
- * Recharts pinta en SVG y necesita valores de color literales — no puede
- * leer `var(--color-*)` de forma confiable en todos sus props, así que este
- * mapa duplica a mano los mismos tonos que `index.css` define por tema.
+ * Colores para Recharts por tema. Recharts pinta en SVG y necesita valores de
+ * color literales — no puede leer `var(--color-*)` de forma confiable en
+ * todos sus props, así que este mapa duplica a mano los mismos tonos que
+ * `index.css` define por tema. Si cambiás uno, cambiá el otro.
  *
- * Los colores de las series (ingresos/gastos, fijo/flexible) son semánticos
- * y NO están acá — se mantienen iguales en los tres temas a propósito.
+ * Incluye los colores semánticos de las series (ingresos/gastos,
+ * fijo/flexible): el significado es el mismo en todos los temas, pero el tono
+ * se ajusta para tener contraste sobre el fondo de cada uno.
  */
 export interface ChartPalette {
   grid: string
@@ -15,28 +16,44 @@ export interface ChartPalette {
   tooltipBg: string
   tooltipBorder: string
   tooltipText: string
+  positive: string
+  negative: string
+  fijos: string
+  flexibles: string
 }
 
 export const CHART_PALETTES: Record<ThemeName, ChartPalette> = {
   dark: {
-    grid: '#1e293b',
-    axis: '#94a3b8',
-    tooltipBg: '#0f172a',
-    tooltipBorder: '#1e293b',
-    tooltipText: '#e2e8f0',
+    grid: '#26262a',
+    axis: '#a1a1aa',
+    tooltipBg: '#141416',
+    tooltipBorder: '#26262a',
+    tooltipText: '#fafafa',
+    positive: '#34d399',
+    negative: '#fb7185',
+    fijos: '#818cf8',
+    flexibles: '#fdba74',
   },
   light: {
-    grid: '#e2e8f0',
-    axis: '#64748b',
+    grid: '#e4e4e7',
+    axis: '#71717a',
     tooltipBg: '#ffffff',
-    tooltipBorder: '#e2e8f0',
-    tooltipText: '#0f172a',
+    tooltipBorder: '#e4e4e7',
+    tooltipText: '#18181b',
+    positive: '#059669',
+    negative: '#e11d48',
+    fijos: '#6366f1',
+    flexibles: '#ea580c',
   },
   rose: {
-    grid: '#fbcfe8',
-    axis: '#be185d',
-    tooltipBg: '#fffbfd',
-    tooltipBorder: '#fbcfe8',
-    tooltipText: '#500724',
+    grid: '#f3e0e7',
+    axis: '#8c6676',
+    tooltipBg: '#ffffff',
+    tooltipBorder: '#f3e0e7',
+    tooltipText: '#2b1720',
+    positive: '#059669',
+    negative: '#dc2626',
+    fijos: '#8b5cf6',
+    flexibles: '#ea580c',
   },
 }

@@ -47,7 +47,7 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, sugge
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-panel p-5">
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-panel p-5">
       <label className="flex flex-col gap-1 text-sm text-ink-soft">
         Alquiler Cobrado
         <div className="flex gap-2">

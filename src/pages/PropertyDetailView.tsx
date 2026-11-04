@@ -168,7 +168,7 @@ export function PropertyDetailView({ propertyId, onBack }: PropertyDetailViewPro
             type="button"
             onClick={handleDeleteProperty}
             aria-label="Eliminar propiedad"
-            className="rounded-lg p-2 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+            className="rounded-lg p-2 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -296,7 +296,7 @@ interface SectionProps {
 
 function Section({ title, actionLabel, onAction, children }: SectionProps) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5">
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted">{title}</h3>
         <button
@@ -328,7 +328,7 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
         type="button"
         onClick={onDelete}
         aria-label="Eliminar"
-        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
       >
         <Trash2 className="h-4 w-4" />
       </button>

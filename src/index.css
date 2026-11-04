@@ -16,57 +16,81 @@
  * todo el trabajo.
  */
 @theme {
-  --color-app: #020617; /* fondo de la página y de los inputs "hundidos" */
-  --color-panel: #0f172a; /* tarjetas, drawers, headers de tabla */
-  --color-line: #1e293b; /* bordes, separadores, hover sutil */
-  --color-line-strong: #334155; /* borde de botones "outline" */
-  --color-ink: #f1f5f9; /* texto principal */
-  --color-ink-soft: #cbd5e1; /* labels, texto secundario legible */
-  --color-muted: #94a3b8; /* texto apagado */
-  --color-faint: #64748b; /* texto todavía más apagado (captions) */
-  --color-accent: #10b981; /* botones primarios, foco, nav activo */
-  --color-accent-strong: #34d399; /* hover del accent */
-  --color-on-accent: #020617; /* texto sobre un fondo accent */
-}
+  /* Chrome neutro (grises zinc) — sin tinte azul, para que el contenido y los
+     colores semánticos sean lo único que "habla" en la pantalla. */
+  --color-app: #0a0a0b; /* fondo de la página y de los inputs "hundidos" */
+  --color-panel: #141416; /* tarjetas, drawers, headers de tabla */
+  --color-line: #26262a; /* bordes, separadores, hover sutil */
+  --color-line-strong: #3f3f46; /* borde de botones "outline" */
+  --color-ink: #fafafa; /* texto principal */
+  --color-ink-soft: #d4d4d8; /* labels, texto secundario legible */
+  --color-muted: #a1a1aa; /* texto apagado */
+  --color-faint: #71717a; /* texto todavía más apagado (captions) */
+  --color-accent: #818cf8; /* botones primarios, foco, nav activo (índigo) */
+  --color-accent-strong: #a5b4fc; /* hover del accent */
+  --color-on-accent: #0a0a0b; /* texto sobre un fondo accent */
 
-/* Los montos/estados financieros (ingreso, gasto, alerta) usan colores fijos
-   a propósito — no dependen del tema, para que "verde = positivo" y
-   "rojo = negativo" se entiendan igual en las tres pieles. Solo el "chrome"
-   (fondos, bordes, texto neutro, accent) cambia con el tema. */
+  /* Colores semánticos. Tienen variante por tema para mantener contraste
+     legible (los tonos claros de modo oscuro no se leen sobre blanco), pero
+     el significado es siempre el mismo: verde = positivo, rojo = negativo. */
+  --color-positive: #34d399; /* ingresos, pagado, ganancia */
+  --color-negative: #fb7185; /* gastos, excedido, pérdida, borrar */
+  --color-warning: #fbbf24; /* pendiente, posible duplicado */
+
+  /* Regla 50/30/20: un color fijo por bloque, usado en badges, barras y gráficos. */
+  --color-fijos: #818cf8;
+  --color-flexibles: #fdba74;
+  --color-ahorro: #34d399;
+}
 
 :root {
   color-scheme: dark;
-  --radius: 0.5rem; /* radio base de los componentes shadcn/ui — coincide con el rounded-lg que ya usaba el resto de la app */
+  --radius: 0.625rem; /* radio base de los componentes shadcn/ui */
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --color-app: #f8fafc;
+  --color-app: #fafafa;
   --color-panel: #ffffff;
-  --color-line: #e2e8f0;
-  --color-line-strong: #cbd5e1;
-  --color-ink: #0f172a;
-  --color-ink-soft: #334155;
-  --color-muted: #64748b;
-  --color-faint: #94a3b8;
-  --color-accent: #059669;
-  --color-accent-strong: #10b981;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
+  --color-ink: #18181b;
+  --color-ink-soft: #3f3f46;
+  --color-muted: #71717a;
+  --color-faint: #a1a1aa;
+  --color-accent: #4f46e5;
+  --color-accent-strong: #4338ca;
   --color-on-accent: #ffffff;
+  --color-positive: #059669;
+  --color-negative: #e11d48;
+  --color-warning: #d97706;
+  --color-fijos: #6366f1;
+  --color-flexibles: #ea580c;
+  --color-ahorro: #059669;
 }
 
+/* Tema Rosa (pedido de cliente): fondo apenas rosado y acento frambuesa, con
+   la misma sobriedad que el tema claro — el rosa marca identidad sin teñir
+   cada texto. El negativo es rojo puro para no confundirse con el acento. */
 [data-theme='rose'] {
   color-scheme: light;
-  --color-app: #fdf2f8;
-  --color-panel: #fffbfd;
-  --color-line: #fbcfe8;
-  --color-line-strong: #f9a8d4;
-  --color-ink: #500724;
-  --color-ink-soft: #9d174d;
-  --color-muted: #be185d;
-  --color-faint: #db7fa9;
-  --color-accent: #e11d48;
-  --color-accent-strong: #f43f5e;
-  --color-on-accent: #fff1f5;
+  --color-app: #fdf7f9;
+  --color-panel: #ffffff;
+  --color-line: #f3e0e7;
+  --color-line-strong: #e9c6d3;
+  --color-ink: #2b1720;
+  --color-ink-soft: #5b3a48;
+  --color-muted: #8c6676;
+  --color-faint: #b897a5;
+  --color-accent: #db2777;
+  --color-accent-strong: #be185d;
+  --color-on-accent: #ffffff;
+  --color-positive: #059669;
+  --color-negative: #dc2626;
+  --color-warning: #d97706;
+  --color-fijos: #8b5cf6;
+  --color-flexibles: #ea580c;
+  --color-ahorro: #059669;
 }
 
 body {
@@ -104,9 +128,8 @@ body {
   --color-input: var(--color-line);
   --color-ring: var(--color-accent);
 
-  /* Fijo, mismo criterio que los colores de estado financiero de arriba. */
-  --color-destructive: #f43f5e;
-  --color-destructive-foreground: #fff1f2;
+  --color-destructive: var(--color-negative);
+  --color-destructive-foreground: #ffffff;
 }
 
 @layer base {

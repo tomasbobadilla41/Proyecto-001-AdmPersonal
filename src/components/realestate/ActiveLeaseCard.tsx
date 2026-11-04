@@ -34,7 +34,7 @@ export function ActiveLeaseCard({
 
   if (!contract) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-panel p-5">
+      <div className="flex flex-col items-start gap-3 rounded-xl border border-line bg-panel p-5">
         <h3 className="flex items-center gap-2 text-sm font-medium text-muted">
           <FileText className="h-4 w-4" />
           Contrato Activo
@@ -56,7 +56,7 @@ export function ActiveLeaseCard({
   const showsBanner = isIncreaseMonth(contract, month, year)
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-5">
+    <div className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-5">
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-medium text-muted">
           <FileText className="h-4 w-4" />
@@ -75,7 +75,7 @@ export function ActiveLeaseCard({
             type="button"
             onClick={() => onDelete(contract)}
             aria-label="Eliminar contrato"
-            className="rounded-lg p-1.5 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+            className="rounded-lg p-1.5 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -89,7 +89,7 @@ export function ActiveLeaseCard({
         </div>
         <div>
           <p className="text-xs text-faint">Precio actual</p>
-          <p className="text-sm font-medium text-emerald-400">
+          <p className="text-sm font-medium text-positive">
             {formatMoney({ amount: contract.currentRentAmount, currency: 'ARS' })}
           </p>
         </div>
@@ -108,22 +108,22 @@ export function ActiveLeaseCard({
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-line">
           <div
-            className="h-full rounded-full bg-blue-500 transition-all"
+            className="h-full rounded-full bg-accent transition-all"
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
       </div>
 
       {showsBanner && (
-        <div className="flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-amber-400">
+        <div className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-warning">
             <AlertTriangle className="h-4 w-4" />
             Corresponde actualización por {INDEX_LABELS[contract.indexType]}
           </div>
           <button
             type="button"
             onClick={() => setIsCalculatorOpen(true)}
-            className="self-start rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-on-accent transition-colors hover:bg-amber-400"
+            className="self-start rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-warning/90"
           >
             Calcular Nuevo Monto
           </button>

@@ -12,8 +12,13 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import { ThemeSelector } from './ThemeSelector'
 
-/** Menú de usuario (avatar + email + cerrar sesión) en la esquina superior derecha, estilo Google/YouTube. */
-export function UserNav() {
+interface UserNavProps {
+  /** 'sidebar': avatar + email al pie del menú lateral (desktop). 'compact': solo el avatar (header mobile). */
+  variant?: 'sidebar' | 'compact'
+}
+
+/** Menú de usuario (avatar + email + tema + cerrar sesión). */
+export function UserNav({ variant = 'compact' }: UserNavProps) {
   const { session, signOut } = useAuth()
   const email = session?.user.email ?? ''
   const initial = email.charAt(0).toUpperCase() || '?'
@@ -29,12 +34,23 @@ export function UserNav() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-        <Avatar>
-          <AvatarFallback className="bg-accent/15 text-accent">{initial}</AvatarFallback>
+      <DropdownMenuTrigger
+        className={
+          variant === 'sidebar'
+            ? 'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors hover:bg-line focus-visible:ring-3 focus-visible:ring-ring/50'
+            : 'rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+        }
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarFallback className="bg-accent/15 text-sm text-accent">{initial}</AvatarFallback>
         </Avatar>
+        {variant === 'sidebar' && <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{email}</span>}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent
+        side={variant === 'sidebar' ? 'top' : 'bottom'}
+        align={variant === 'sidebar' ? 'start' : 'end'}
+        className="w-64"
+      >
         <DropdownMenuLabel className="truncate font-normal text-ink" title={email}>
           {email}
         </DropdownMenuLabel>

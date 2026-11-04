@@ -198,7 +198,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="overflow-x-auto rounded-2xl border border-line bg-panel xl:col-span-2">
+        <div className="overflow-x-auto rounded-xl border border-line bg-panel xl:col-span-2">
           <table className="w-full text-left text-sm">
             <thead className="bg-panel/70 text-muted">
               <tr>
@@ -248,7 +248,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
                         type="button"
                         onClick={() => handleDelete(expense)}
                         aria-label="Eliminar gasto"
-                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

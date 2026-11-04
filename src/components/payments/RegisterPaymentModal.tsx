@@ -68,7 +68,7 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 rounded-2xl border border-line bg-panel p-6">
+      <div className="flex w-full max-w-sm flex-col gap-6 rounded-xl border border-line bg-panel p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-ink">Registrar pago · {service.title}</h3>
           <button

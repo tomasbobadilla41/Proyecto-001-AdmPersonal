@@ -110,7 +110,7 @@ export function CryptoTab() {
         </CardContent>
       </Card>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
+      <div className="overflow-x-auto rounded-xl border border-line bg-panel">
         <table className="w-full text-left text-sm">
           <thead className="bg-panel/70 text-muted">
             <tr>
@@ -147,7 +147,7 @@ export function CryptoTab() {
                   </td>
                   <td
                     className={`whitespace-nowrap px-4 py-3 text-right font-medium ${
-                      pnl === null ? 'text-faint' : isPositive ? 'text-emerald-400' : 'text-rose-400'
+                      pnl === null ? 'text-faint' : isPositive ? 'text-positive' : 'text-negative'
                     }`}
                   >
                     {pnl !== null ? formatPnlPercentage(pnl.percentage) : isLoadingPrices ? '…' : '—'}

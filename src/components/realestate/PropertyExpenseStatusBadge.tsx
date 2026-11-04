@@ -5,9 +5,9 @@ interface PropertyExpenseStatusBadgeProps {
 }
 
 const STYLES: Record<PropertyExpenseStatus, { label: string; className: string }> = {
-  PAID: { label: 'Pagado', className: 'bg-emerald-500/10 text-emerald-400' },
-  PENDING: { label: 'Pendiente', className: 'bg-amber-500/10 text-amber-400' },
-  AUTO_DEBIT: { label: 'Débito automático', className: 'bg-blue-500/10 text-blue-400' },
+  PAID: { label: 'Pagado', className: 'bg-positive/10 text-positive' },
+  PENDING: { label: 'Pendiente', className: 'bg-warning/10 text-warning' },
+  AUTO_DEBIT: { label: 'Débito automático', className: 'bg-accent/10 text-accent' },
 }
 
 export function PropertyExpenseStatusBadge({ status }: PropertyExpenseStatusBadgeProps) {

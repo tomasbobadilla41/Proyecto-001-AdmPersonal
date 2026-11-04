@@ -152,7 +152,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
 
   if (isEditing) {
     return (
-      <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
+      <StatCard title="Ingresos Totales" icon={Wallet}>
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-xs text-muted">
             Sueldo ARS
@@ -241,7 +241,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
 
   if (!income) {
     return (
-      <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
+      <StatCard title="Ingresos Totales" icon={Wallet}>
         <p className="text-sm text-faint">Todavía no cargaste el sueldo de este mes.</p>
         <button
           type="button"
@@ -257,7 +257,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
   const totalEnUSD = tipoCambio > 0 ? totalARS / tipoCambio : 0
 
   return (
-    <StatCard title="Ingresos Totales" icon={Wallet} iconClassName="text-emerald-400">
+    <StatCard title="Ingresos Totales" icon={Wallet}>
       <div className="flex items-start justify-between gap-2">
         <span className="text-2xl font-semibold text-ink">
           {formatMoney({ amount: animatedTotalARS, currency: 'ARS' })}

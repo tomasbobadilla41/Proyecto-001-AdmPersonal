@@ -156,7 +156,7 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed, 
 
         <div
           className={`rounded-lg border p-3 text-sm ${
-            reconciles ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+            reconciles ? 'border-positive/30 bg-positive/10 text-positive' : 'border-warning/30 bg-warning/10 text-warning'
           }`}
         >
           {reconciles ? (
@@ -197,9 +197,9 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed, 
                 <span className="text-xs text-faint">
                   {row.cuotaActual && row.cuotaTotal && `Cuota ${row.cuotaActual}/${row.cuotaTotal} · `}
                   Compra original: {formatDateAR(row.fechaCompraOriginal)}
-                  {row.alreadyImported && <span className="text-amber-400"> · Ya importado</span>}
+                  {row.alreadyImported && <span className="text-warning"> · Ya importado</span>}
                   {row.possibleDuplicate && (
-                    <span className="text-amber-400"> · Posible duplicado: ya tenés un gasto parecido ese mes</span>
+                    <span className="text-warning"> · Posible duplicado: ya tenés un gasto parecido ese mes</span>
                   )}
                 </span>
               </div>

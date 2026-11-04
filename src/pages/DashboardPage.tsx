@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import { SalaryCard } from '../components/dashboard/SalaryCard'
-import { FixedExpensesCard } from '../components/dashboard/FixedExpensesCard'
-import { FlexibleExpensesCard } from '../components/dashboard/FlexibleExpensesCard'
-import { SavingsCard } from '../components/dashboard/SavingsCard'
+import { BudgetRuleCard } from '../components/dashboard/BudgetRuleCard'
 import { ExchangeRateInput } from '../components/dashboard/ExchangeRateInput'
 import { IncomeExpenseChart } from '../components/dashboard/IncomeExpenseChart'
 import { MonthSelector } from '../components/dashboard/MonthSelector'
@@ -67,7 +65,6 @@ export function DashboardPage() {
     () => calculateActualSplit(expenses, current.mes, current.anio, current.tipoCambioUsado),
     [expenses, current.mes, current.anio, current.tipoCambioUsado],
   )
-  const remanente = current.ingresosTotalesARS - fijosReal - flexiblesReal
 
   const currentMonthExpenses = useMemo(
     () =>
@@ -87,15 +84,15 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-ink">
-            Resumen de {MESES_LARGOS[current.mes - 1]} {current.anio}
+          <p className="text-sm text-muted">Resumen</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-ink">
+            {MESES_LARGOS[current.mes - 1]} {current.anio}
           </h2>
-          <p className="text-sm text-muted">Métricas del mes elegido — regla 50/30/20</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <MonthSelector periods={selectorPeriods} selected={selectedPeriod} onChange={setSelectedPeriod} />
           <ExchangeRateInput
             mes={current.mes}
@@ -106,7 +103,8 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Lo primero que se ve: cuánto entró y cómo se repartió. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <SalaryCard
           mes={current.mes}
           anio={current.anio}
@@ -114,9 +112,14 @@ export function DashboardPage() {
           tipoCambio={current.tipoCambioUsado}
           onSave={upsertIncome}
         />
-        <FixedExpensesCard total={fijosReal} limiteIdeal={budget.fijos} />
-        <FlexibleExpensesCard total={flexiblesReal} limiteIdeal={budget.flexibles} />
-        <SavingsCard remanente={remanente} metaIdeal={budget.ahorro} />
+        <div className="lg:col-span-2">
+          <BudgetRuleCard
+            ingresoARS={current.ingresosTotalesARS}
+            fijosReal={fijosReal}
+            flexiblesReal={flexiblesReal}
+            budget={budget}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -126,9 +129,9 @@ export function DashboardPage() {
         <QuickPayList />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <ActiveInstallmentsWidget expenses={currentMonthExpenses} />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ExpenseBreakdownWidget expenses={currentMonthExpenses} tipoCambio={current.tipoCambioUsado} />
+        <ActiveInstallmentsWidget expenses={currentMonthExpenses} />
       </div>
     </div>
   )
