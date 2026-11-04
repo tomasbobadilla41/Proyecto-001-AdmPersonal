@@ -84,7 +84,7 @@ export function FileDropBar({
     >
       <input ref={fileInputRef} type="file" accept={accept} className="hidden" onChange={handleFileInputChange} />
 
-      <StatusIcon className={`shrink-0 text-accent ${isHero ? 'h-6 w-6' : 'h-4 w-4'} ${isProcessing ? 'animate-spin' : ''}`} />
+      <StatusIcon className={`shrink-0 text-accent-text ${isHero ? 'h-6 w-6' : 'h-4 w-4'} ${isProcessing ? 'animate-spin' : ''}`} />
 
       {isProcessing ? (
         <p className="text-sm text-ink-soft">{processingLabel}</p>

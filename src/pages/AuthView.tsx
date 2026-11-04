@@ -48,7 +48,7 @@ export function AuthView() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            <Wallet className="h-6 w-6 text-accent" />
+            <Wallet className="h-6 w-6 text-accent-text" />
             Adm Personal
           </div>
           <CardTitle>{mode === 'login' ? 'Iniciar sesión' : 'Recuperar contraseña'}</CardTitle>
@@ -78,7 +78,7 @@ export function AuthView() {
                   <Label htmlFor="password">Contraseña</Label>
                   <button
                     type="button"
-                    className="text-xs text-muted hover:text-accent"
+                    className="text-xs text-muted hover:text-accent-text"
                     onClick={() => setMode('reset')}
                   >
                     ¿Olvidaste tu contraseña?

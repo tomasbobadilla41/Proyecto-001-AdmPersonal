@@ -2,9 +2,9 @@ import { DataMigrationCenter } from '../components/settings/DataMigrationCenter'
 
 export function SettingsPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-ink">Configuración</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">Configuración</h2>
         <p className="text-sm text-muted">Importá o exportá tus datos financieros.</p>
       </div>
 

@@ -75,7 +75,7 @@ export function SubscriptionsReviewDialog({
                       <p className={`truncate text-sm ${item.selected ? 'text-ink' : 'text-faint'}`}>{item.title}</p>
                       {(item.isNew || item.alreadyLoadedThisMonth) && (
                         <div className="flex gap-2 text-xs">
-                          {item.isNew && <span className="text-accent">Nueva</span>}
+                          {item.isNew && <span className="text-accent-text">Nueva</span>}
                           {item.alreadyLoadedThisMonth && <span className="text-warning">Ya cargada este mes</span>}
                         </div>
                       )}

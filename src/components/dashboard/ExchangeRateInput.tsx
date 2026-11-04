@@ -60,7 +60,7 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
           onChange={(e) => setDraft(e.target.value)}
           className="w-24 bg-transparent text-sm font-semibold text-ink focus:outline-none"
         />
-        <button type="submit" className="text-xs font-semibold text-accent hover:text-accent-strong">
+        <button type="submit" className="text-xs font-semibold text-accent-text hover:text-accent-strong">
           Guardar
         </button>
         <button
@@ -93,7 +93,7 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
           disabled={isLoading}
           aria-label="Actualizar desde dolarapi.com (oficial, venta)"
           title="Actualizar desde dolarapi.com (oficial, venta)"
-          className="rounded-lg border border-line bg-panel p-2 text-muted transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-50"
+          className="rounded-lg border border-line bg-panel p-2 text-muted transition-colors hover:border-accent/50 hover:text-accent-text disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
         </button>

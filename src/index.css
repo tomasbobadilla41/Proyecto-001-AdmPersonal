@@ -28,6 +28,10 @@
   --color-faint: #71717a; /* texto todavía más apagado (captions) */
   --color-accent: #818cf8; /* botones primarios, foco, nav activo (índigo) */
   --color-accent-strong: #a5b4fc; /* hover del accent */
+  /* Accent usado como TEXTO (links, nav activo, íconos). En la mayoría de los
+     temas es igual al accent, pero en Rosa el fucsia de los botones no llega
+     a 4,5:1 como texto chico sobre el fondo rosa, así que va más oscuro. */
+  --color-accent-text: #818cf8;
   --color-on-accent: #0a0a0b; /* texto sobre un fondo accent */
   --color-nav: #141416; /* menú lateral, header y barra inferior mobile */
 
@@ -58,17 +62,19 @@
   --color-ink: #18181b;
   --color-ink-soft: #3f3f46;
   --color-muted: #71717a;
-  --color-faint: #a1a1aa;
+  --color-faint: #85858e;
   --color-accent: #4f46e5;
   --color-accent-strong: #4338ca;
+  --color-accent-text: #4f46e5;
   --color-on-accent: #ffffff;
   --color-nav: #ffffff;
-  --color-positive: #059669;
+  /* Tonos "700" de Tailwind: los "600" no llegaban a 4,5:1 como texto chico. */
+  --color-positive: #047857;
   --color-negative: #e11d48;
-  --color-warning: #d97706;
-  --color-fijos: #6366f1;
-  --color-flexibles: #ea580c;
-  --color-ahorro: #059669;
+  --color-warning: #b45309;
+  --color-fijos: #5b5bd6;
+  --color-flexibles: #c2410c;
+  --color-ahorro: #047857;
 }
 
 /* Tema Rosa (pedido de cliente): el rosa vive en la navegación y el fondo,
@@ -85,16 +91,18 @@
   --color-ink: #2b1720;
   --color-ink-soft: #5b3a48;
   --color-muted: #87596b;
-  --color-faint: #b08597;
+  --color-faint: #9b6f81;
   --color-accent: #db2777;
   --color-accent-strong: #be185d;
+  --color-accent-text: #be185d;
   --color-on-accent: #ffffff;
-  --color-positive: #059669;
-  --color-negative: #dc2626;
-  --color-warning: #d97706;
-  --color-fijos: #8b5cf6;
-  --color-flexibles: #ea580c;
-  --color-ahorro: #059669;
+  /* Un grado más oscuros que en Claro: el fondo rosa resta contraste. */
+  --color-positive: #047857;
+  --color-negative: #b91c1c;
+  --color-warning: #b45309;
+  --color-fijos: #7c3aed;
+  --color-flexibles: #c2410c;
+  --color-ahorro: #047857;
 }
 
 body {

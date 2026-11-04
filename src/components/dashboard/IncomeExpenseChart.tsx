@@ -55,7 +55,12 @@ export function IncomeExpenseChart({ summaries }: IncomeExpenseChartProps) {
               itemStyle={{ color: palette.tooltipText }}
               formatter={(value) => `$${Number(value).toLocaleString('es-AR')}`}
             />
-            <Legend wrapperStyle={{ color: palette.axis, fontSize: 12 }} />
+            <Legend
+              wrapperStyle={{ fontSize: 12 }}
+              // Recharts pinta el texto con el color de la serie; acá solo el ícono
+              // lleva ese color y el nombre usa el gris de los ejes (legible en todo tema).
+              formatter={(value) => <span style={{ color: palette.axis }}>{value}</span>}
+            />
             <Bar dataKey="Ingresos" fill={palette.positive} radius={[4, 4, 0, 0]} maxBarSize={28} />
             <Bar dataKey="Gastos" fill={palette.negative} radius={[4, 4, 0, 0]} maxBarSize={28} />
           </BarChart>

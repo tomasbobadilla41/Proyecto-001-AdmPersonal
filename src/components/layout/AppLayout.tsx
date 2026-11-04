@@ -108,7 +108,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
         <DropdownMenu>
           <DropdownMenuTrigger
             className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium outline-none transition-colors ${
-              isMoreActive ? 'text-accent' : 'text-muted'
+              isMoreActive ? 'text-accent-text' : 'text-muted'
             }`}
           >
             <MoreHorizontal className="h-5 w-5" />
@@ -119,7 +119,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
               <DropdownMenuItem
                 key={key}
                 onClick={() => onTabChange(key)}
-                className={activeTab === key ? 'text-accent' : undefined}
+                className={activeTab === key ? 'text-accent-text' : undefined}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -128,7 +128,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onTabChange(SETTINGS_NAV_ITEM.key)}
-              className={activeTab === SETTINGS_NAV_ITEM.key ? 'text-accent' : undefined}
+              className={activeTab === SETTINGS_NAV_ITEM.key ? 'text-accent-text' : undefined}
             >
               <Settings className="h-4 w-4" />
               {SETTINGS_NAV_ITEM.label}
@@ -169,7 +169,7 @@ function SidebarButton({ item, active, onClick }: NavButtonProps) {
         active ? 'bg-line font-medium text-ink' : 'text-muted hover:bg-line/60 hover:text-ink'
       }`}
     >
-      <Icon className={`h-4 w-4 ${active ? 'text-accent' : ''}`} />
+      <Icon className={`h-4 w-4 ${active ? 'text-accent-text' : ''}`} />
       {label}
     </button>
   )
@@ -184,7 +184,7 @@ function BottomBarButton({ item, active, onClick }: NavButtonProps) {
       onClick={() => onClick(key)}
       aria-current={active ? 'page' : undefined}
       className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors ${
-        active ? 'text-accent' : 'text-muted'
+        active ? 'text-accent-text' : 'text-muted'
       }`}
     >
       <Icon className="h-5 w-5" />

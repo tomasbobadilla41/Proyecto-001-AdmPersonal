@@ -42,7 +42,7 @@ export function UserNav({ variant = 'compact' }: UserNavProps) {
         }
       >
         <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-accent/15 text-sm text-accent">{initial}</AvatarFallback>
+          <AvatarFallback className="bg-accent/15 text-sm text-accent-text">{initial}</AvatarFallback>
         </Avatar>
         {variant === 'sidebar' && <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{email}</span>}
       </DropdownMenuTrigger>

@@ -101,7 +101,7 @@ export function RentUpdateCalculator({
                 disabled={isLoading}
                 aria-label="Buscar último IPC publicado (INDEC, datos.gob.ar)"
                 title="Buscar último IPC publicado (INDEC, datos.gob.ar)"
-                className="shrink-0 rounded-lg border border-line bg-app p-2 text-muted transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-50"
+                className="shrink-0 rounded-lg border border-line bg-app p-2 text-muted transition-colors hover:border-accent/50 hover:text-accent-text disabled:opacity-50"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               </button>

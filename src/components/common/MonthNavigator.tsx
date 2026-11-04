@@ -43,7 +43,7 @@ export function MonthNavigator({ mes, anio, onChange }: MonthNavigatorProps) {
         <button
           type="button"
           onClick={() => onChange(now.getMonth() + 1, now.getFullYear())}
-          className="rounded-md px-2 py-1 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
+          className="rounded-md px-2 py-1 text-sm font-medium text-accent-text transition-colors hover:bg-accent/10"
         >
           Hoy
         </button>

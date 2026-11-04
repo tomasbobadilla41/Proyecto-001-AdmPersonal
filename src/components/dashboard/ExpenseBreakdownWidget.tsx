@@ -60,7 +60,10 @@ export function ExpenseBreakdownWidget({ expenses, tipoCambio }: ExpenseBreakdow
               <Legend
                 verticalAlign="bottom"
                 height={64}
-                wrapperStyle={{ color: palette.axis, fontSize: 11, lineHeight: '1.4rem' }}
+                wrapperStyle={{ fontSize: 11, lineHeight: '1.4rem' }}
+                // Recharts pinta el texto con el color de la porción (ilegible con
+                // amarillos sobre fondo claro); solo el ícono lleva ese color.
+                formatter={(value) => <span style={{ color: palette.axis }}>{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>
