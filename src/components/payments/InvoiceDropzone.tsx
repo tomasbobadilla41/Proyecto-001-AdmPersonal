@@ -1,8 +1,9 @@
-import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
-import { FileText, Loader2, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { isFixedExpenseCategory, type FixedExpenseCategory, type ServiceConfig } from '../../types/finance'
 import { onlyDigits, parseInvoicePdf } from '../../services/parseInvoiceApi'
+import { FileDropBar } from '../common/FileDropBar'
 
 interface InvoiceDropzoneProps {
   services: ServiceConfig[]
@@ -22,9 +23,7 @@ interface InvoiceDropzoneProps {
  * no, `onNoMatch` para precargar el alta de un servicio nuevo.
  */
 export function InvoiceDropzone({ services, onMatch, onNoMatch }: InvoiceDropzoneProps) {
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function processPdf(file: File) {
     setIsProcessing(true)
@@ -62,62 +61,16 @@ export function InvoiceDropzone({ services, onMatch, onNoMatch }: InvoiceDropzon
     }
   }
 
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    setIsDraggingOver(false)
-    const file = event.dataTransfer.files[0]
-    if (file) void processPdf(file)
-  }
-
-  function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (file) void processPdf(file)
-    event.target.value = ''
-  }
-
   return (
-    <div
-      onClick={() => !isProcessing && fileInputRef.current?.click()}
-      onDragOver={(e) => {
-        e.preventDefault()
-        setIsDraggingOver(true)
-      }}
-      onDragLeave={() => setIsDraggingOver(false)}
-      onDrop={handleDrop}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && !isProcessing) {
-          e.preventDefault()
-          fileInputRef.current?.click()
-        }
-      }}
-      aria-label="Subir factura en PDF para registrar un pago"
-      // Barra de una línea (antes un recuadro grande): subir facturas es
-      // ocasional y no debería ser lo primero que se ve de la pantalla.
-      className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
-        isDraggingOver ? 'border-accent bg-accent/5' : 'border-line-strong hover:border-accent/60 hover:bg-line/30'
-      }`}
-    >
-      <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileInputChange} />
-
-      {isProcessing ? (
-        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" />
-      ) : isDraggingOver ? (
-        <FileText className="h-4 w-4 shrink-0 text-accent" />
-      ) : (
-        <Sparkles className="h-4 w-4 shrink-0 text-accent" />
-      )}
-      <p className="text-sm text-ink-soft">
-        {isProcessing ? (
-          'Analizando factura con IA…'
-        ) : (
-          <>
-            <span className="font-medium text-ink">Arrastrá una factura PDF</span>
-            <span className="text-muted"> o hacé clic — detectamos el servicio y el monto.</span>
-          </>
-        )}
-      </p>
-    </div>
+    <FileDropBar
+      accept="application/pdf"
+      onFile={(file) => void processPdf(file)}
+      isProcessing={isProcessing}
+      title="Arrastrá una factura PDF"
+      hint="o hacé clic — detectamos el servicio y el monto."
+      processingLabel="Analizando factura con IA…"
+      icon={Sparkles}
+      ariaLabel="Subir factura en PDF para registrar un pago"
+    />
   )
 }
