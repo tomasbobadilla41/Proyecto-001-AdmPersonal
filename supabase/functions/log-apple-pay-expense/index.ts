@@ -4,7 +4,7 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 // Pensada para que la invoque un Shortcut de iOS (trigger "Transaction" del
 // Wallet), no el navegador — por eso no valida un JWT de sesión como
@@ -68,6 +68,39 @@ function errorResponse(message: string, status: number): Response {
   return Response.json({ error: message }, { status, headers: corsHeaders });
 }
 
+/** Máximo de caracteres que se guardan de un body que no es JSON válido. */
+const MAX_RAW_BODY_LENGTH = 5000;
+
+interface RequestLogEntry {
+  status: number;
+  payload?: unknown;
+  parsedAmount?: number | null;
+  error?: string;
+  expenseId?: string;
+}
+
+/**
+ * Guarda la llamada en `apple_pay_requests` (migración 015). Nunca lanza: si
+ * el registro falla, solo se loguea, para no cambiar la respuesta al Shortcut.
+ */
+async function logRequest(
+  supabase: SupabaseClient,
+  userId: string,
+  entry: RequestLogEntry,
+): Promise<void> {
+  const { error } = await supabase.from("apple_pay_requests").insert({
+    user_id: userId,
+    status: entry.status,
+    payload: entry.payload ?? null,
+    parsed_amount: entry.parsedAmount ?? null,
+    error: entry.error ?? null,
+    expense_id: entry.expenseId ?? null,
+  });
+  if (error) {
+    console.error("No se pudo registrar la llamada en apple_pay_requests:", error.message);
+  }
+}
+
 export default {
   async fetch(req: Request): Promise<Response> {
     if (req.method === "OPTIONS") {
@@ -87,51 +120,79 @@ export default {
       );
     }
 
-    if (req.headers.get("x-shortcut-secret") !== expectedSecret) {
-      return errorResponse("No autorizado.", 401);
-    }
-
-    let body: ShortcutPayload;
-    try {
-      body = await req.json();
-    } catch {
-      return errorResponse("Body inválido: se esperaba JSON.", 400);
-    }
-
-    const amount = parseAmount(body.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      // Se loguea lo recibido para poder diagnosticar formatos nuevos del
-      // Shortcut desde los logs de la función.
-      console.error("Monto inválido recibido:", JSON.stringify(body.amount));
-      return errorResponse(
-        `Monto inválido: ${JSON.stringify(body.amount)} (debe ser un número mayor a 0).`,
-        400,
-      );
-    }
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Registra la llamada y responde con el error. Centralizado para que
+    // ningún camino de salida quede sin registro.
+    async function fail(message: string, status: number, extra: Omit<RequestLogEntry, "status" | "error"> = {}) {
+      await logRequest(supabase, userId!, { status, error: message, ...extra });
+      return errorResponse(message, status);
+    }
+
+    if (req.headers.get("x-shortcut-secret") !== expectedSecret) {
+      // Sin body a propósito: no guardar contenido de alguien no autorizado.
+      return fail("No autorizado.", 401);
+    }
+
+    const rawBody = await req.text();
+    let body: ShortcutPayload;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return fail("Body inválido: se esperaba JSON.", 400, {
+        payload: { raw: rawBody.slice(0, MAX_RAW_BODY_LENGTH) },
+      });
+    }
+
+    if (typeof body !== "object" || body === null) {
+      return fail("Body inválido: se esperaba un objeto JSON.", 400, { payload: body });
+    }
+
+    const amount = parseAmount(body.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      console.error("Monto inválido recibido:", JSON.stringify(body.amount));
+      return fail(
+        `Monto inválido: ${JSON.stringify(body.amount)} (debe ser un número mayor a 0).`,
+        400,
+        { payload: body },
+      );
+    }
 
     // Argentina es UTC-3 todo el año (sin horario de verano) — restar 3hs a
     // "ahora" antes de recortar la fecha evita que una compra de noche quede
     // fechada al día siguiente (que pasaría usando la fecha UTC directo).
     const today = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-    const { error } = await supabase.from("expenses").insert({
-      user_id: userId,
-      amount,
-      type: "FLEXIBLE",
-      category: body.category?.trim() || DEFAULT_CATEGORY,
-      date: today,
-      description: body.description?.trim() || "Apple Pay",
-      currency: "ARS",
-    });
+    const { data: expense, error } = await supabase
+      .from("expenses")
+      .insert({
+        user_id: userId,
+        amount,
+        type: "FLEXIBLE",
+        category: (typeof body.category === "string" ? body.category.trim() : "") || DEFAULT_CATEGORY,
+        date: today,
+        description: (typeof body.description === "string" ? body.description.trim() : "") || "Apple Pay",
+        currency: "ARS",
+      })
+      .select("id")
+      .single();
 
     if (error) {
-      return errorResponse(`Error al guardar el gasto: ${error.message}`, 500);
+      return fail(`Error al guardar el gasto: ${error.message}`, 500, {
+        payload: body,
+        parsedAmount: amount,
+      });
     }
+
+    await logRequest(supabase, userId, {
+      status: 200,
+      payload: body,
+      parsedAmount: amount,
+      expenseId: expense.id,
+    });
 
     return Response.json({ ok: true }, { headers: corsHeaders });
   },
