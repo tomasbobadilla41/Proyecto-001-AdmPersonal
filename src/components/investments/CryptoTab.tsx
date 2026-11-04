@@ -1,27 +1,52 @@
-import { useState, type FormEvent } from 'react'
-import { Loader2, Trash2 } from 'lucide-react'
+import { useMemo, useState, type FormEvent } from 'react'
+import { Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import type { PortfolioHolding } from '../../types/finance'
 import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
+import { FloatingActionButton } from '../common/FloatingActionButton'
+import { ConfirmDialog } from '../common/ConfirmDialog'
+import { PositionList } from './PositionList'
+import { PortfolioSummary } from './PortfolioSummary'
 import { usePortfolioStore } from '../../hooks/usePortfolioStore'
 import { useBinancePrices } from '../../hooks/useBinancePrices'
 import { fetchBinancePrice } from '../../services/binanceApi'
-import { TableSkeletonRows } from '../common/TableSkeletonRows'
 import { formatMoney } from '../../utils/currency'
-import { calculateQuantity, formatPnlPercentage, formatQuantity, getHoldingPnl } from '../../utils/portfolio'
+import { formatDateAR } from '../../utils/finance'
+import {
+  aggregateHoldingsByTicker,
+  calculateQuantity,
+  formatPnlPercentage,
+  getHoldingPnl,
+  type AggregatedPosition,
+} from '../../utils/portfolio'
 
 export function CryptoTab() {
   const { holdings, isLoading, addHolding, removeHolding } = usePortfolioStore()
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [ticker, setTicker] = useState('')
   const [amountInvested, setAmountInvested] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [purchaseToDelete, setPurchaseToDelete] = useState<PortfolioHolding | null>(null)
 
-  const cryptoHoldings = holdings.filter((h) => h.assetType === 'crypto')
-  const { prices: livePrices, isLoading: isLoadingPrices } = useBinancePrices(
-    cryptoHoldings.map((h) => h.ticker),
-  )
+  const positions = useMemo(() => aggregateHoldingsByTicker(holdings, 'crypto'), [holdings])
+  const { prices: livePrices, isLoading: isLoadingPrices, error: pricesError } = useBinancePrices(positions.map((p) => p.ticker))
+
+  /** Valor actual de una posición en USD, o `null` si Binance todavía no devolvió el precio. */
+  function currentValueOf(position: AggregatedPosition): number | null {
+    const livePrice = livePrices[position.ticker]
+    return livePrice !== undefined ? position.quantity * livePrice : null
+  }
+
+  const totalInvested = positions.reduce((sum, p) => sum + p.totalInvested, 0)
+  const currentValues = positions.map(currentValueOf)
+  // Solo se muestra el total si están TODOS los precios — un total parcial
+  // daría un rendimiento engañoso (faltaría el valor de alguna moneda).
+  const hasAllPrices = positions.length > 0 && currentValues.every((v) => v !== null)
+  const totalCurrent = hasAllPrices ? currentValues.reduce<number>((sum, v) => sum + (v ?? 0), 0) : null
+  const totalPnl = totalCurrent !== null ? getHoldingPnl(totalInvested, totalCurrent) : null
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -47,30 +72,72 @@ export function CryptoTab() {
       if (saved) {
         setTicker('')
         setAmountInvested('')
+        setIsFormOpen(false)
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'No se pudo obtener el precio de Binance.',
-      )
+      toast.error(error instanceof Error ? error.message : 'No se pudo obtener el precio de Binance.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  function handleDelete(id: string) {
-    if (window.confirm('¿Eliminar este registro de compra?')) {
-      void removeHolding(id)
-    }
-  }
+  const pendingLabel = isLoadingPrices ? 'Cargando…' : '—'
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Registrar compra de criptomoneda</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-3">
+    <div className="flex flex-col gap-4">
+      {positions.length > 0 && (
+        <PortfolioSummary
+          metrics={[
+            { label: 'Invertido', value: formatMoney({ amount: totalInvested, currency: 'USD' }) },
+            {
+              label: 'Valor actual',
+              value: totalCurrent !== null ? formatMoney({ amount: totalCurrent, currency: 'USD' }) : pendingLabel,
+              caption: pricesError && !hasAllPrices ? 'Falta el precio en vivo de alguna moneda' : 'En vivo desde Binance',
+            },
+            {
+              label: 'Resultado',
+              value: totalPnl ? formatMoney({ amount: totalPnl.amount, currency: 'USD' }) : pendingLabel,
+              caption: totalPnl ? formatPnlPercentage(totalPnl.percentage) : undefined,
+              valueClassName: totalPnl ? (totalPnl.amount >= 0 ? 'text-positive' : 'text-negative') : undefined,
+            },
+          ]}
+        />
+      )}
+
+      <PositionList
+        positions={positions}
+        isLoading={isLoading}
+        emptyMessage="Todavía no registraste ninguna compra de criptomonedas."
+        onDeletePurchase={setPurchaseToDelete}
+        renderValue={(position) => {
+          const currentValue = currentValueOf(position)
+          const pnl = currentValue !== null ? getHoldingPnl(position.totalInvested, currentValue) : null
+          return (
+            <>
+              <p className="text-sm font-medium tabular-nums text-ink">
+                {currentValue !== null ? formatMoney({ amount: currentValue, currency: 'USD' }) : pendingLabel}
+              </p>
+              <p
+                className={`text-xs font-medium tabular-nums ${
+                  pnl === null ? 'text-faint' : pnl.amount >= 0 ? 'text-positive' : 'text-negative'
+                }`}
+              >
+                {pnl !== null ? formatPnlPercentage(pnl.percentage) : `de ${formatMoney({ amount: position.totalInvested, currency: 'USD' })}`}
+              </p>
+            </>
+          )
+        }}
+      />
+
+      <FloatingActionButton icon={Plus} label="Registrar compra" onClick={() => setIsFormOpen(true)} />
+
+      <Dialog open={isFormOpen} onOpenChange={(open) => !isSubmitting && setIsFormOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar compra de cripto</DialogTitle>
+            <DialogDescription>El precio de compra se toma en vivo desde Binance al confirmar.</DialogDescription>
+          </DialogHeader>
+          <form id="crypto-purchase-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="crypto-ticker">Moneda</Label>
               <Input
@@ -79,6 +146,7 @@ export function CryptoTab() {
                 onChange={(e) => setTicker(e.target.value)}
                 placeholder="BTC, ETH…"
                 disabled={isSubmitting}
+                autoFocus
                 required
               />
             </div>
@@ -96,85 +164,39 @@ export function CryptoTab() {
                 required
               />
             </div>
-
-            <div className="sm:col-span-3 flex items-center justify-between gap-3">
-              <p className="text-xs text-faint">
-                El precio de compra se toma en vivo desde Binance al registrar la compra.
-              </p>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Registrar compra
-              </Button>
-            </div>
           </form>
-        </CardContent>
-      </Card>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsFormOpen(false)} disabled={isSubmitting}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="crypto-purchase-form" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Registrar compra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <div className="overflow-x-auto rounded-xl border border-line bg-panel">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-panel/70 text-muted">
-            <tr>
-              <th className="px-4 py-3 font-medium">Moneda</th>
-              <th className="px-4 py-3 text-right font-medium">Inversión Inicial (USD)</th>
-              <th className="px-4 py-3 text-right font-medium">Valor Actual (USD)</th>
-              <th className="px-4 py-3 text-right font-medium">Rendimiento</th>
-              <th className="px-4 py-3 text-right font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {isLoading && <TableSkeletonRows columns={5} rows={4} />}
-            {!isLoading && cryptoHoldings.map((holding) => {
-              const livePrice = livePrices[holding.ticker]
-              const currentValue = livePrice !== undefined ? holding.quantity * livePrice : null
-              const pnl = currentValue !== null ? getHoldingPnl(holding.amountInvested, currentValue) : null
-              const isPositive = pnl !== null && pnl.amount >= 0
-
-              return (
-                <tr key={holding.id} className="text-ink-soft">
-                  <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">
-                    {holding.ticker}
-                    <p className="text-xs font-normal text-faint">{formatQuantity(holding.quantity)} fracciones</p>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
-                    {formatMoney({ amount: holding.amountInvested, currency: 'USD' })}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
-                    {currentValue !== null
-                      ? formatMoney({ amount: currentValue, currency: 'USD' })
-                      : isLoadingPrices
-                        ? 'Cargando precios…'
-                        : '—'}
-                  </td>
-                  <td
-                    className={`whitespace-nowrap px-4 py-3 text-right font-medium ${
-                      pnl === null ? 'text-faint' : isPositive ? 'text-positive' : 'text-negative'
-                    }`}
-                  >
-                    {pnl !== null ? formatPnlPercentage(pnl.percentage) : isLoadingPrices ? '…' : '—'}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(holding.id)}
-                      aria-label="Eliminar registro"
-                      className="rounded-lg p-1.5 text-faint transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-            {!isLoading && cryptoHoldings.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-faint">
-                  Todavía no registraste ninguna compra de criptomonedas.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ConfirmDialog
+        open={purchaseToDelete !== null}
+        title="¿Eliminar esta compra?"
+        description={
+          purchaseToDelete && (
+            <>
+              Compra de <span className="font-medium text-ink-soft">{purchaseToDelete.ticker}</span> por{' '}
+              {formatMoney({ amount: purchaseToDelete.amountInvested, currency: purchaseToDelete.currency })} del{' '}
+              {formatDateAR(new Date(purchaseToDelete.date))}. El resto de la posición no se toca.
+            </>
+          )
+        }
+        confirmLabel="Eliminar"
+        destructive
+        onCancel={() => setPurchaseToDelete(null)}
+        onConfirm={() => {
+          if (purchaseToDelete) void removeHolding(purchaseToDelete.id)
+          setPurchaseToDelete(null)
+        }}
+      />
     </div>
   )
 }
