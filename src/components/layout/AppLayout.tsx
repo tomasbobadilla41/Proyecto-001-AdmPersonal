@@ -63,7 +63,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
   return (
     <div className="flex min-h-screen flex-col bg-app text-ink md:flex-row">
       {/* Menú lateral (desktop): navegación arriba, configuración y usuario al pie */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-panel px-3 py-5 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-nav px-3 py-5 md:flex">
         <Brand />
 
         <nav className="mt-6 flex flex-col gap-0.5">
@@ -91,7 +91,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Encabezado mobile: solo marca + usuario. La navegación va abajo, al alcance del pulgar. */}
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-panel/90 px-4 py-2.5 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-nav/90 px-4 py-2.5 backdrop-blur md:hidden">
           <Brand />
           <UserNav />
         </header>
@@ -101,7 +101,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
       </div>
 
       {/* Barra inferior (mobile) */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-nav/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {MOBILE_PRIMARY_ITEMS.map((item) => (
           <BottomBarButton key={item.key} item={item} active={activeTab === item.key} onClick={onTabChange} />
         ))}

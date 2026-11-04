@@ -28,7 +28,7 @@ export function BudgetRuleCard({ ingresoARS, fijosReal, flexiblesReal, budget }:
   const pct = (valor: number) => (base > 0 ? (Math.max(valor, 0) / base) * 100 : 0)
 
   return (
-    <div className="flex h-full flex-col gap-5 rounded-xl border border-line bg-panel p-5">
+    <div className="flex h-full flex-col gap-4 rounded-xl border border-line bg-panel p-5 sm:gap-5">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-sm text-muted">Distribución del ingreso</h3>
         <span className="text-xs text-faint">Regla 50 / 30 / 20</span>
@@ -44,7 +44,8 @@ export function BudgetRuleCard({ ingresoARS, fijosReal, flexiblesReal, budget }:
         <div className="h-full bg-ahorro transition-all" style={{ width: `${pct(disponible)}%` }} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* Mobile: una fila compacta por bloque. Desde sm: tres columnas. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <BudgetBlock label="Fijos" dotClassName="bg-fijos" real={fijosReal} ideal={budget.fijos} percent={50} kind="limite" />
         <BudgetBlock
           label="Flexibles"
@@ -99,15 +100,19 @@ function BudgetBlock({ label, dotClassName, real, ideal, percent, kind }: Budget
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <span className="flex items-center gap-2 text-xs text-muted">
+    // Grilla de 2 columnas en mobile (etiqueta + leyenda | monto a la derecha);
+    // desde sm se apila en una sola columna: etiqueta, monto, leyenda.
+    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 sm:grid-cols-1 sm:items-start sm:gap-y-1">
+      <span className="col-start-1 row-start-1 flex items-center gap-2 text-xs text-muted">
         <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
         {label}
       </span>
-      <span className={`text-xl font-semibold tabular-nums ${amountClassName}`}>
+      <span
+        className={`col-start-2 row-span-2 row-start-1 text-base font-semibold tabular-nums sm:col-start-1 sm:row-span-1 sm:row-start-2 sm:text-xl ${amountClassName}`}
+      >
         {formatMoney({ amount: animated, currency: 'ARS' })}
       </span>
-      <span className={`text-xs ${captionClassName}`}>{caption}</span>
+      <span className={`col-start-1 row-start-2 text-xs sm:row-start-3 ${captionClassName}`}>{caption}</span>
     </div>
   )
 }

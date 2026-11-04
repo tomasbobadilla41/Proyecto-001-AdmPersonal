@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SalaryCard } from '../components/dashboard/SalaryCard'
 import { BudgetRuleCard } from '../components/dashboard/BudgetRuleCard'
+import { Skeleton } from '../components/common/Skeleton'
 import { ExchangeRateInput } from '../components/dashboard/ExchangeRateInput'
 import { IncomeExpenseChart } from '../components/dashboard/IncomeExpenseChart'
 import { MonthSelector } from '../components/dashboard/MonthSelector'
@@ -25,9 +26,13 @@ const MESES_A_MOSTRAR = 6
 const MESES_SELECTOR = 12
 
 export function DashboardPage() {
-  const { expenses } = useExpenseStore()
-  const { incomes, upsertIncome } = useIncomeStore()
-  const { exchangeRates, upsertExchangeRate } = useExchangeRateStore()
+  const { expenses, isLoading: isLoadingExpenses } = useExpenseStore()
+  const { incomes, upsertIncome, isLoading: isLoadingIncomes } = useIncomeStore()
+  const { exchangeRates, upsertExchangeRate, isLoading: isLoadingRates } = useExchangeRateStore()
+  // Hasta que lleguen los tres, los totales son parciales (ej: gastos sin
+  // sueldo → "Gastaste más de lo que ingresó" por un instante). Mostramos
+  // esqueletos en vez de números engañosos.
+  const isLoading = isLoadingExpenses || isLoadingIncomes || isLoadingRates
 
   const periodos = useMemo(() => getTrailingPeriods(MESES_A_MOSTRAR), [])
   const summaries = useMemo(
@@ -104,23 +109,27 @@ export function DashboardPage() {
       </div>
 
       {/* Lo primero que se ve: cuánto entró y cómo se repartió. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <SalaryCard
-          mes={current.mes}
-          anio={current.anio}
-          income={currentIncome}
-          tipoCambio={current.tipoCambioUsado}
-          onSave={upsertIncome}
-        />
-        <div className="lg:col-span-2">
-          <BudgetRuleCard
-            ingresoARS={current.ingresosTotalesARS}
-            fijosReal={fijosReal}
-            flexiblesReal={flexiblesReal}
-            budget={budget}
+      {isLoading ? (
+        <SummarySkeleton />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <SalaryCard
+            mes={current.mes}
+            anio={current.anio}
+            income={currentIncome}
+            tipoCambio={current.tipoCambioUsado}
+            onSave={upsertIncome}
           />
+          <div className="lg:col-span-2">
+            <BudgetRuleCard
+              ingresoARS={current.ingresosTotalesARS}
+              fijosReal={fijosReal}
+              flexiblesReal={flexiblesReal}
+              budget={budget}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -132,6 +141,31 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ExpenseBreakdownWidget expenses={currentMonthExpenses} tipoCambio={current.tipoCambioUsado} />
         <ActiveInstallmentsWidget expenses={currentMonthExpenses} />
+      </div>
+    </div>
+  )
+}
+
+/** Placeholder con la forma de la fila Ingresos + Distribución mientras cargan los stores. */
+function SummarySkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-busy="true" aria-label="Cargando resumen">
+      <div className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-5">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-8 w-44" />
+        <Skeleton className="h-3 w-32" />
+      </div>
+      <div className="flex flex-col gap-5 rounded-xl border border-line bg-panel p-5 lg:col-span-2">
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-2.5 w-full rounded-full" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-28" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
