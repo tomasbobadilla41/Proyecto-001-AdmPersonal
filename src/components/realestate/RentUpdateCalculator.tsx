@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Loader2, RefreshCw, X } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import type { RentIndexType } from '../../types/realEstate'
 import { formatMoney } from '../../utils/currency'
 import { calculateRentUpdate } from '../../utils/leaseContract'
 import { useLatestIpc } from '../../hooks/useLatestIpc'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 
 interface RentUpdateCalculatorProps {
   isOpen: boolean
@@ -39,7 +40,6 @@ export function RentUpdateCalculator({
     setCurrentIndex('')
   }, [isOpen, initialBaseIndexValue])
 
-  if (!isOpen) return null
 
   const newAmount = calculateRentUpdate(currentAmount, Number(baseIndex), Number(currentIndex))
 
@@ -56,19 +56,11 @@ export function RentUpdateCalculator({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-sm flex-col gap-5 rounded-xl border border-line bg-panel p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-ink">Calculadora de Actualización</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-lg p-1 text-muted hover:bg-line hover:text-ink"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Calculadora de Actualización</DialogTitle>
+        </DialogHeader>
 
         <div>
           <p className="text-xs text-faint">Monto Actual</p>
@@ -142,7 +134,7 @@ export function RentUpdateCalculator({
             Cancelar
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

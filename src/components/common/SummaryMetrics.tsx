@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export interface PortfolioMetric {
+export interface SummaryMetric {
   label: string
   value: ReactNode
   /** Línea chica debajo del valor (ej: "+5,20%", "en vivo desde Binance"). */
@@ -9,8 +9,8 @@ export interface PortfolioMetric {
   valueClassName?: string
 }
 
-/** Fila de 2-3 métricas del portfolio (invertido / valor actual / resultado). */
-export function PortfolioSummary({ metrics }: { metrics: PortfolioMetric[] }) {
+/** Fila de 2-3 métricas de resumen (ej: invertido / valor actual / resultado). */
+export function SummaryMetrics({ metrics }: { metrics: SummaryMetric[] }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-5 rounded-xl border border-line bg-panel p-5 sm:grid-cols-3">
       {metrics.map((metric) => (

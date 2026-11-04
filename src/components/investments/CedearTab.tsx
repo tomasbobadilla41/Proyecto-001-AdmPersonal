@@ -7,7 +7,7 @@ import { Label } from '../ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { CedearCombobox } from './CedearCombobox'
 import { PositionList } from './PositionList'
-import { PortfolioSummary } from './PortfolioSummary'
+import { SummaryMetrics } from '../common/SummaryMetrics'
 import { FloatingActionButton } from '../common/FloatingActionButton'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { usePortfolioStore } from '../../hooks/usePortfolioStore'
@@ -56,7 +56,7 @@ export function CedearTab() {
   return (
     <div className="flex flex-col gap-4">
       {positions.length > 0 && (
-        <PortfolioSummary
+        <SummaryMetrics
           metrics={[
             { label: 'Invertido', value: formatMoney({ amount: totalInvested, currency: 'ARS' }) },
             {

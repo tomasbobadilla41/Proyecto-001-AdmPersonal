@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Check } from 'lucide-react'
 import type { PropertyIncome } from '../../types/realEstate'
 import type { Currency } from '../../types/money'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
 
 interface RentIncomeInputProps {
   propertyId: string
@@ -12,9 +15,6 @@ interface RentIncomeInputProps {
   suggestedAmount?: number
   onSave: (income: PropertyIncome) => void
 }
-
-const INPUT_CLASSNAME =
-  'w-32 rounded-lg border border-line bg-app px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none'
 
 export function RentIncomeInput({ propertyId, month, year, existingIncome, suggestedAmount, onSave }: RentIncomeInputProps) {
   const [amount, setAmount] = useState('')
@@ -33,7 +33,8 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, sugge
     }
   }, [existingIncome, suggestedAmount, month, year])
 
-  function handleSave() {
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
     const numero = Number(amount)
     if (!numero || numero <= 0) return
     onSave({
@@ -47,43 +48,47 @@ export function RentIncomeInput({ propertyId, month, year, existingIncome, sugge
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-panel p-5">
-      <label className="flex flex-col gap-1 text-sm text-ink-soft">
-        Alquiler Cobrado
-        <div className="flex gap-2">
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            className={INPUT_CLASSNAME}
-          />
-          <select
-            aria-label="Moneda"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as Currency)}
-            className="rounded-lg border border-line bg-app px-2 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-          >
-            <option value="ARS">ARS</option>
-            <option value="USD">USD</option>
-          </select>
-        </div>
-      </label>
-      <button
-        type="button"
-        onClick={handleSave}
-        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
-      >
-        Guardar
-      </button>
-      {existingIncome && (
-        <span className="pb-2 text-xs text-faint">Ya cargado este mes — se actualiza al guardar de nuevo.</span>
-      )}
-      {!existingIncome && suggestedAmount && (
-        <span className="pb-2 text-xs text-faint">Precargado con el precio del contrato — todavía no se guardó.</span>
-      )}
-    </div>
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-medium text-ink">Alquiler del mes</h3>
+        {existingIncome ? (
+          <span className="flex items-center gap-1 text-xs font-medium text-positive">
+            <Check className="h-3.5 w-3.5" />
+            Cobrado
+          </span>
+        ) : (
+          <span className="text-xs text-faint">Sin cobrar</span>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+        <Input
+          type="number"
+          min="0"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+          aria-label="Monto cobrado"
+          className="w-40 tabular-nums"
+        />
+        <select
+          aria-label="Moneda"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value as Currency)}
+          className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm text-ink outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <option value="ARS">ARS</option>
+          <option value="USD">USD</option>
+        </select>
+        <Button type="submit" variant={existingIncome ? 'outline' : 'default'}>
+          {existingIncome ? 'Actualizar' : 'Marcar cobrado'}
+        </Button>
+      </form>
+
+      {!existingIncome && suggestedAmount ? (
+        <p className="text-xs text-faint">Precargado con el precio del contrato — todavía no se guardó.</p>
+      ) : null}
+    </section>
   )
 }

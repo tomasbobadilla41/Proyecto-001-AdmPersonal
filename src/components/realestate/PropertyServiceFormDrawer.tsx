@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
 import type { PropertyServiceConfig } from '../../types/realEstate'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 
 interface PropertyServiceFormDrawerProps {
   isOpen: boolean
@@ -40,7 +40,6 @@ export function PropertyServiceFormDrawer({
     }
   }, [isOpen, initialConfig])
 
-  if (!isOpen) return null
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -58,21 +57,11 @@ export function PropertyServiceFormDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-      <div className="flex h-full w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-line bg-panel p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-ink">
-            {isEditMode ? 'Editar servicio' : 'Agregar servicio'}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-lg p-1 text-muted hover:bg-line hover:text-ink"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEditMode ? 'Editar servicio' : 'Agregar servicio'}</DialogTitle>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm text-ink-soft">
@@ -116,7 +105,7 @@ export function PropertyServiceFormDrawer({
             {isEditMode ? 'Guardar cambios' : 'Guardar servicio'}
           </button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { FloatingActionButton } from '../common/FloatingActionButton'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { PositionList } from './PositionList'
-import { PortfolioSummary } from './PortfolioSummary'
+import { SummaryMetrics } from '../common/SummaryMetrics'
 import { usePortfolioStore } from '../../hooks/usePortfolioStore'
 import { useBinancePrices } from '../../hooks/useBinancePrices'
 import { fetchBinancePrice } from '../../services/binanceApi'
@@ -86,7 +86,7 @@ export function CryptoTab() {
   return (
     <div className="flex flex-col gap-4">
       {positions.length > 0 && (
-        <PortfolioSummary
+        <SummaryMetrics
           metrics={[
             { label: 'Invertido', value: formatMoney({ amount: totalInvested, currency: 'USD' }) },
             {
