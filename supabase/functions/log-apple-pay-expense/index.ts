@@ -23,9 +23,45 @@ const corsHeaders: Record<string, string> = {
 const DEFAULT_CATEGORY = "Tarjeta de Crédito";
 
 interface ShortcutPayload {
-  amount: number;
+  // El trigger "Transaction" del Wallet manda el monto como texto con formato
+  // local (ej: "$ 12.345,67"), no como número — por eso se acepta ambos.
+  amount: number | string;
   description?: string;
   category?: string;
+}
+
+/**
+ * Convierte el monto que manda el Shortcut a número. Acepta números y strings
+ * con símbolo de moneda, espacios y separadores en formato argentino
+ * ("$ 12.345,67") o estadounidense ("12,345.67"). Devuelve NaN si no puede.
+ */
+export function parseAmount(raw: unknown): number {
+  if (typeof raw === "number") return raw;
+  if (typeof raw !== "string") return NaN;
+
+  // Dejar solo dígitos, separadores y signo (saca "$", "ARS", espacios, NBSP).
+  let s = raw.replace(/[^\d.,-]/g, "");
+  if (!s) return NaN;
+
+  const lastDot = s.lastIndexOf(".");
+  const lastComma = s.lastIndexOf(",");
+
+  if (lastDot !== -1 && lastComma !== -1) {
+    // Están los dos: el que aparece último es el separador decimal.
+    const decimal = lastComma > lastDot ? "," : ".";
+    const thousands = decimal === "," ? "." : ",";
+    s = s.split(thousands).join("").replace(decimal, ".");
+  } else if (lastComma !== -1 || lastDot !== -1) {
+    // Hay un solo tipo de separador: es decimal solo si aparece una vez y
+    // le siguen 1 o 2 dígitos ("12,5" / "12.50"); si no, es de miles
+    // ("12.345" o "1.234.567", lo habitual en montos en pesos).
+    const sep = lastComma !== -1 ? "," : ".";
+    const parts = s.split(sep);
+    const isDecimal = parts.length === 2 && parts[1].length > 0 && parts[1].length <= 2;
+    s = isDecimal ? parts.join(".") : parts.join("");
+  }
+
+  return Number(s);
 }
 
 function errorResponse(message: string, status: number): Response {
@@ -62,9 +98,15 @@ export default {
       return errorResponse("Body inválido: se esperaba JSON.", 400);
     }
 
-    const amount = Number(body.amount);
-    if (!amount || amount <= 0) {
-      return errorResponse("Falta 'amount' (debe ser un número mayor a 0).", 400);
+    const amount = parseAmount(body.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      // Se loguea lo recibido para poder diagnosticar formatos nuevos del
+      // Shortcut desde los logs de la función.
+      console.error("Monto inválido recibido:", JSON.stringify(body.amount));
+      return errorResponse(
+        `Monto inválido: ${JSON.stringify(body.amount)} (debe ser un número mayor a 0).`,
+        400,
+      );
     }
 
     const supabase = createClient(
