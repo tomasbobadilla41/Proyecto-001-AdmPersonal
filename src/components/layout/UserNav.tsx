@@ -21,7 +21,10 @@ interface UserNavProps {
 export function UserNav({ variant = 'compact' }: UserNavProps) {
   const { session, signOut } = useAuth()
   const email = session?.user.email ?? ''
-  const initial = email.charAt(0).toUpperCase() || '?'
+  // Nombre cargado al crear la cuenta (user_metadata.full_name); si no hay, se usa el email.
+  const fullName = String(session?.user.user_metadata?.full_name ?? '').trim()
+  const displayName = fullName || email
+  const initial = displayName.charAt(0).toUpperCase() || '?'
 
   async function handleSignOut() {
     try {
@@ -44,15 +47,16 @@ export function UserNav({ variant = 'compact' }: UserNavProps) {
         <Avatar className="h-8 w-8">
           <AvatarFallback className="bg-accent/15 text-sm text-accent-text">{initial}</AvatarFallback>
         </Avatar>
-        {variant === 'sidebar' && <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{email}</span>}
+        {variant === 'sidebar' && <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{displayName}</span>}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         side={variant === 'sidebar' ? 'top' : 'bottom'}
         align={variant === 'sidebar' ? 'start' : 'end'}
         className="w-64"
       >
-        <DropdownMenuLabel className="truncate font-normal text-ink" title={email}>
-          {email}
+        <DropdownMenuLabel className="flex flex-col font-normal" title={email}>
+          {fullName && <span className="truncate text-ink">{fullName}</span>}
+          <span className={fullName ? 'truncate text-xs text-muted' : 'truncate text-ink'}>{email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Tema</DropdownMenuLabel>
