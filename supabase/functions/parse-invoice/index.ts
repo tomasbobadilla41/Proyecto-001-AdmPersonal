@@ -4,6 +4,7 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { requirePermission } from "../_shared/permissions.ts";
 
 // Mismo límite validado en el cliente (parseInvoiceApi.ts) — esto es la
 // defensa de servidor, por si alguien le pega directo a la función sin pasar
@@ -146,6 +147,13 @@ export default {
 
     if (req.method !== "POST") {
       return errorResponse("Método no permitido.", 405, cors);
+    }
+
+    // Solo usuarios con el permiso invoice_ai (ver migración 016) pueden
+    // gastar la cuota de Gemini.
+    const auth = await requirePermission(req, "invoice_ai");
+    if (!auth.ok) {
+      return errorResponse(auth.message, auth.status, cors);
     }
 
     let pdfBase64: unknown;
