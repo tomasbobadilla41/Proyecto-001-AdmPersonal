@@ -47,9 +47,9 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
     return (
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-panel px-3 py-2"
+        className="flex items-center gap-2 rounded-lg border border-accent/50 bg-panel px-3 py-2"
       >
-        <DollarSign className="h-4 w-4 shrink-0 text-emerald-400" />
+        <DollarSign className="h-4 w-4 shrink-0 text-faint" />
         <span className="text-sm text-muted">Dólar {MESES_CORTOS[mes - 1]}:</span>
         <input
           type="number"
@@ -60,7 +60,7 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
           onChange={(e) => setDraft(e.target.value)}
           className="w-24 bg-transparent text-sm font-semibold text-ink focus:outline-none"
         />
-        <button type="submit" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300">
+        <button type="submit" className="text-xs font-semibold text-accent hover:text-accent-strong">
           Guardar
         </button>
         <button
@@ -80,9 +80,9 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
         <button
           type="button"
           onClick={startEditing}
-          className="flex items-center gap-2 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink-soft transition-colors hover:border-emerald-500/50 hover:text-ink"
+          className="flex items-center gap-2 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
         >
-          <DollarSign className="h-4 w-4 text-emerald-400" />
+          <DollarSign className="h-4 w-4 text-faint" />
           Dólar {MESES_CORTOS[mes - 1]} {anio}:
           <span className="font-semibold text-ink">${valor.toLocaleString('es-AR')}</span>
           <Pencil className="h-3.5 w-3.5 text-faint" />
@@ -93,12 +93,12 @@ export function ExchangeRateInput({ mes, anio, valor, onSave }: ExchangeRateInpu
           disabled={isLoading}
           aria-label="Actualizar desde dolarapi.com (oficial, venta)"
           title="Actualizar desde dolarapi.com (oficial, venta)"
-          className="rounded-lg border border-line bg-panel p-2 text-muted transition-colors hover:border-emerald-500/50 hover:text-emerald-400 disabled:opacity-50"
+          className="rounded-lg border border-line bg-panel p-2 text-muted transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
         </button>
       </div>
-      {error && <span className="text-xs text-rose-400">{error}</span>}
+      {error && <span className="text-xs text-negative">{error}</span>}
     </div>
   )
 }

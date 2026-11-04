@@ -28,12 +28,12 @@ export function IncomeExpenseChart({ summaries }: IncomeExpenseChartProps) {
   }))
 
   return (
-    <div className="rounded-2xl border border-line bg-panel p-5">
-      <h3 className="mb-4 text-sm font-medium text-muted">Ingresos vs Gastos (últimos meses)</h3>
+    <div className="rounded-xl border border-line bg-panel p-5">
+      <h3 className="mb-4 text-sm font-medium text-muted">Ingresos vs gastos · últimos 6 meses</h3>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} vertical={false} />
+            <CartesianGrid stroke={palette.grid} vertical={false} />
             <XAxis
               dataKey="periodo"
               stroke={palette.axis}
@@ -56,8 +56,8 @@ export function IncomeExpenseChart({ summaries }: IncomeExpenseChartProps) {
               formatter={(value) => `$${Number(value).toLocaleString('es-AR')}`}
             />
             <Legend wrapperStyle={{ color: palette.axis, fontSize: 12 }} />
-            <Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Gastos" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Ingresos" fill={palette.positive} radius={[4, 4, 0, 0]} maxBarSize={28} />
+            <Bar dataKey="Gastos" fill={palette.negative} radius={[4, 4, 0, 0]} maxBarSize={28} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -42,13 +42,13 @@ export function RealEstateDashboardView() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard title="Ingresos Totales por Alquileres" icon={Wallet} iconClassName="text-emerald-400">
+        <StatCard title="Ingresos Totales por Alquileres" icon={Wallet}>
           <span className="text-2xl font-semibold text-ink">
             {formatMoney({ amount: totalIngresos, currency: 'ARS' })}
           </span>
           <p className="text-xs text-faint">Todas las propiedades, mes actual</p>
         </StatCard>
-        <StatCard title="Gastos Totales de Propiedades" icon={Receipt} iconClassName="text-rose-400">
+        <StatCard title="Gastos Totales de Propiedades" icon={Receipt}>
           <span className="text-2xl font-semibold text-ink">
             {formatMoney({ amount: totalGastos, currency: 'ARS' })}
           </span>
@@ -63,7 +63,7 @@ export function RealEstateDashboardView() {
           ))}
         </div>
       ) : properties.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
+        <div className="rounded-xl border border-line bg-panel p-8 text-center text-sm text-faint">
           Todavía no agregaste ninguna propiedad.
         </div>
       ) : (

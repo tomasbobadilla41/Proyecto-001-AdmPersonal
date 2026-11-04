@@ -8,7 +8,7 @@ export function QuickPayList() {
   const { services } = useServicesStore()
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-line bg-panel p-5">
+    <div className="flex h-full flex-col rounded-xl border border-line bg-panel p-5">
       <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-muted">
         <Zap className="h-4 w-4" />
         Accesos Rápidos de Pago
@@ -29,7 +29,7 @@ export function QuickPayList() {
                 className="flex items-center justify-between gap-3 rounded-lg border border-line bg-app px-3 py-2"
               >
                 <span className="flex min-w-0 items-center gap-2 text-sm text-ink-soft">
-                  <Icon className="h-4 w-4 shrink-0 text-blue-400" />
+                  <Icon className="h-4 w-4 shrink-0 text-faint" />
                   <span className="truncate">{service.title}</span>
                 </span>
                 {service.paymentLink && isSafeHttpUrl(service.paymentLink) && (

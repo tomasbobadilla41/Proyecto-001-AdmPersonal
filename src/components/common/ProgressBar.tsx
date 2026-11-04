@@ -2,7 +2,7 @@ interface ProgressBarProps {
   /** 0-100. Se clampea igual si viene fuera de rango. */
   value: number
   className?: string
-  /** Color del relleno — por defecto `bg-accent` (ej: pasar `bg-rose-400` para marcar que se pasó de un límite). */
+  /** Color del relleno — por defecto `bg-accent` (ej: pasar `bg-negative` para marcar que se pasó de un límite). */
   indicatorClassName?: string
 }
 

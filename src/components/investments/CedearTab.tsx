@@ -103,7 +103,7 @@ export function CedearTab() {
         </CardContent>
       </Card>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
+      <div className="overflow-x-auto rounded-xl border border-line bg-panel">
         <table className="w-full text-left text-sm">
           <thead className="bg-panel/70 text-muted">
             <tr>

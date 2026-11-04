@@ -57,7 +57,7 @@ export function RentUpdateCalculator({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-sm flex-col gap-5 rounded-2xl border border-line bg-panel p-6">
+      <div className="flex w-full max-w-sm flex-col gap-5 rounded-xl border border-line bg-panel p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-ink">Calculadora de Actualización</h3>
           <button
@@ -109,18 +109,18 @@ export function RentUpdateCalculator({
                 disabled={isLoading}
                 aria-label="Buscar último IPC publicado (INDEC, datos.gob.ar)"
                 title="Buscar último IPC publicado (INDEC, datos.gob.ar)"
-                className="shrink-0 rounded-lg border border-line bg-app p-2 text-muted transition-colors hover:border-emerald-500/50 hover:text-emerald-400 disabled:opacity-50"
+                className="shrink-0 rounded-lg border border-line bg-app p-2 text-muted transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-50"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               </button>
             )}
           </div>
-          {error && <span className="text-xs text-rose-400">{error}</span>}
+          {error && <span className="text-xs text-negative">{error}</span>}
         </label>
 
         <div className="rounded-xl border border-line bg-app p-4 text-center">
           <p className="text-xs text-faint">Nuevo Monto Calculado</p>
-          <p className="text-3xl font-semibold text-emerald-400">
+          <p className="text-3xl font-semibold text-positive">
             {newAmount !== null ? formatMoney({ amount: newAmount, currency: 'ARS' }) : '—'}
           </p>
         </div>

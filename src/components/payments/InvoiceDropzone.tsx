@@ -84,7 +84,7 @@ export function InvoiceDropzone({ services, onMatch, onNoMatch }: InvoiceDropzon
       }}
       onDragLeave={() => setIsDraggingOver(false)}
       onDrop={handleDrop}
-      className={`mx-auto flex w-full max-w-3xl cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
+      className={`mx-auto flex w-full max-w-3xl cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
         isDraggingOver ? 'border-accent bg-accent/5' : 'border-line hover:border-line-strong'
       }`}
     >

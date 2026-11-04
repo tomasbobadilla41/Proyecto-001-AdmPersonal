@@ -116,7 +116,7 @@ export function PaymentsHubPage() {
           ))}
         </div>
       ) : services.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
+        <div className="rounded-xl border border-line bg-panel p-8 text-center text-sm text-faint">
           Todavía no configuraste ningún servicio.
         </div>
       ) : (

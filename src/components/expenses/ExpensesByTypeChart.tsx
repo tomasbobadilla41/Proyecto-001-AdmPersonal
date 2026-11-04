@@ -14,13 +14,6 @@ const TYPE_LABELS: Record<ExpenseType, string> = {
   FLEXIBLE: 'Gastos Flexibles',
 }
 
-// Mismos colores que el badge de Tipo en la tabla: azul para Fijo, naranja
-// para Flexible. Semánticos a propósito: no cambian con el tema.
-const TYPE_COLORS: Record<ExpenseType, string> = {
-  FIJO: '#60a5fa',
-  FLEXIBLE: '#fb923c',
-}
-
 export function ExpensesByTypeChart({ expenses, tipoCambio }: ExpensesByTypeChartProps) {
   const { theme } = useTheme()
   const palette = CHART_PALETTES[theme]
@@ -36,7 +29,7 @@ export function ExpensesByTypeChart({ expenses, tipoCambio }: ExpensesByTypeChar
     .filter((entry) => entry.total > 0)
 
   return (
-    <div className="flex flex-col rounded-2xl border border-line bg-panel p-5">
+    <div className="flex flex-col rounded-xl border border-line bg-panel p-5">
       <h3 className="mb-4 text-sm font-medium text-muted">Gastos Fijos vs Flexibles</h3>
       {data.length === 0 ? (
         <div className="flex h-72 items-center justify-center text-sm text-faint">
@@ -48,7 +41,7 @@ export function ExpensesByTypeChart({ expenses, tipoCambio }: ExpensesByTypeChar
             <PieChart>
               <Pie data={data} dataKey="total" nameKey="label" innerRadius="50%" outerRadius="80%" paddingAngle={2}>
                 {data.map((entry) => (
-                  <Cell key={entry.type} fill={TYPE_COLORS[entry.type]} />
+                  <Cell key={entry.type} fill={entry.type === 'FIJO' ? palette.fijos : palette.flexibles} />
                 ))}
               </Pie>
               <Tooltip

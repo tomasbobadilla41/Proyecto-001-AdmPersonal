@@ -22,14 +22,14 @@ export function ServiceChecklistTable({
 }: ServiceChecklistTableProps) {
   if (services.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-panel p-8 text-center text-sm text-faint">
+      <div className="rounded-xl border border-line bg-panel p-8 text-center text-sm text-faint">
         Configurá servicios arriba para verlos en el checklist mensual.
       </div>
     )
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
+    <div className="overflow-x-auto rounded-xl border border-line bg-panel">
       <table className="w-full text-left text-sm">
         <thead className="bg-panel/70 text-muted">
           <tr>

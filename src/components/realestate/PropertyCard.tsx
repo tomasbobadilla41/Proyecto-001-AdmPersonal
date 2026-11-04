@@ -13,9 +13,9 @@ interface PropertyCardProps {
 
 export function PropertyCard({ name, address, alquilerCobrado, gastosPagados, onManage }: PropertyCardProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-5 transition-all duration-200 animate-in fade-in-0 hover:border-line-strong hover:shadow-lg">
+    <div className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-5 transition-all duration-200 animate-in fade-in-0 hover:border-line-strong hover:shadow-lg">
       <div className="flex items-center gap-2">
-        <Building2 className="h-5 w-5 text-blue-400" />
+        <Building2 className="h-5 w-5 text-muted" />
         <div className="min-w-0">
           <p className="truncate font-semibold text-ink">{name}</p>
           <p className="truncate text-xs text-faint">{address}</p>
@@ -25,7 +25,7 @@ export function PropertyCard({ name, address, alquilerCobrado, gastosPagados, on
       <div className="flex flex-col gap-1.5 text-sm">
         <div className="flex items-center justify-between">
           <span className="text-muted">Alquiler Cobrado</span>
-          <span className="font-medium text-emerald-400">
+          <span className="font-medium text-positive">
             {formatMoney({ amount: alquilerCobrado, currency: 'ARS' })}
           </span>
         </div>

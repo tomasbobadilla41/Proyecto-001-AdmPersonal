@@ -179,7 +179,7 @@ export function SubscriptionsPage() {
       </div>
 
       {activeSubscriptions.length > 0 && (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-line bg-panel p-5">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-xl border border-line bg-panel p-5">
           <h3 className="text-sm font-semibold text-ink">Tus suscripciones activas</h3>
 
           <div className="flex flex-col gap-2">
@@ -211,7 +211,7 @@ export function SubscriptionsPage() {
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
-        className={`mx-auto flex w-full max-w-3xl cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
+        className={`mx-auto flex w-full max-w-3xl cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
           isDragging ? 'border-accent bg-accent/5' : 'border-line hover:border-line-strong'
         }`}
       >
@@ -232,7 +232,7 @@ export function SubscriptionsPage() {
       </div>
 
       {reviewItems && (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-line bg-panel p-5">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-xl border border-line bg-panel p-5">
           <h3 className="text-sm font-semibold text-ink">Revisá antes de confirmar</h3>
 
           <div className="flex flex-col gap-2">
@@ -252,7 +252,7 @@ export function SubscriptionsPage() {
                     <p className="text-sm font-medium text-ink">{item.title}</p>
                     <div className="flex gap-2 text-xs">
                       {item.isNew && <span className="text-accent">Nueva</span>}
-                      {item.alreadyLoadedThisMonth && <span className="text-orange-400">Ya cargada este mes</span>}
+                      {item.alreadyLoadedThisMonth && <span className="text-warning">Ya cargada este mes</span>}
                     </div>
                   </div>
                 </div>

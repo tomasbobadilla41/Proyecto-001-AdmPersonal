@@ -104,7 +104,7 @@ export function PropertyServiceFormDrawer({
               type="checkbox"
               checked={isAutoDebit}
               onChange={(e) => setIsAutoDebit(e.target.checked)}
-              className="h-4 w-4 rounded border-line-strong bg-app text-emerald-500 focus:ring-emerald-500"
+              className="h-4 w-4 rounded border-line-strong bg-app accent-accent"
             />
             Está en débito automático
           </label>

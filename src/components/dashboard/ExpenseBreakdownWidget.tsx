@@ -28,7 +28,7 @@ export function ExpenseBreakdownWidget({ expenses, tipoCambio }: ExpenseBreakdow
     .sort((a, b) => b.total - a.total)
 
   return (
-    <div className="flex flex-col rounded-2xl border border-line bg-panel p-5">
+    <div className="flex flex-col rounded-xl border border-line bg-panel p-5">
       <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-muted">
         <PieChartIcon className="h-4 w-4" />
         Gastos por Categoría (mes actual)

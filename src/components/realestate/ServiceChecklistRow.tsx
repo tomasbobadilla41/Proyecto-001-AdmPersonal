@@ -64,7 +64,7 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
             <button
               type="button"
               onClick={() => persist('AUTO_DEBIT')}
-              className="text-xs font-medium text-blue-400 hover:text-blue-300"
+              className="text-xs font-medium text-accent hover:text-accent-strong"
             >
               Guardar
             </button>
@@ -87,7 +87,7 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
       </td>
       <td className="whitespace-nowrap px-4 py-3 text-right">
         {service.isAutoDebit ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
             <Lock className="h-3 w-3" />
             Débito Automático
           </span>
@@ -101,7 +101,7 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
           </button>
         ) : (
           <div className="flex items-center justify-end gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+            <span className="inline-flex items-center gap-1 rounded-full bg-positive/10 px-2 py-0.5 text-xs font-medium text-positive">
               <Check className="h-3 w-3" />
               Pagado
             </span>
