@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Check, Lock, Pencil } from 'lucide-react'
+import { Check, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { PropertyExpense, PropertyExpenseStatus, PropertyServiceConfig } from '../../types/realEstate'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 import { formatMoney } from '../../utils/currency'
 
 interface ServiceChecklistRowProps {
@@ -11,12 +20,24 @@ interface ServiceChecklistRowProps {
   month: number
   year: number
   onSave: (expense: PropertyExpense) => void
+  onEditService: () => void
+  onDeleteService: () => void
 }
 
-const AMOUNT_INPUT_CLASSNAME =
-  'w-28 rounded-lg border border-line bg-app px-2 py-1 text-sm text-ink focus:border-accent focus:outline-none'
-
-export function ServiceChecklistRow({ service, expense, propertyId, month, year, onSave }: ServiceChecklistRowProps) {
+/**
+ * Un servicio de la propiedad + su estado en el mes elegido. Los gastos de
+ * propiedades no tienen campo de moneda: se cargan y muestran en ARS.
+ */
+export function ServiceChecklistRow({
+  service,
+  expense,
+  propertyId,
+  month,
+  year,
+  onSave,
+  onEditService,
+  onDeleteService,
+}: ServiceChecklistRowProps) {
   const isPaid = expense?.status === 'PAID'
   const [isEditing, setIsEditing] = useState(!isPaid)
   const [amount, setAmount] = useState(expense ? String(expense.amount) : '')
@@ -45,77 +66,83 @@ export function ServiceChecklistRow({ service, expense, propertyId, month, year,
     setIsEditing(false)
   }
 
+  const amountInput = (
+    <Input
+      type="number"
+      min="0"
+      step="0.01"
+      value={amount}
+      onChange={(e) => setAmount(e.target.value)}
+      placeholder={service.isAutoDebit ? 'Monto debitado' : '0.00'}
+      aria-label={`Monto de ${service.serviceName}`}
+      className="h-8 w-32 tabular-nums"
+    />
+  )
+
   return (
-    <tr className="text-ink-soft">
-      <td className="whitespace-nowrap px-4 py-3 font-medium">{service.serviceName}</td>
-      <td className="whitespace-nowrap px-4 py-3 text-muted">{service.accountNumber}</td>
-      <td className="whitespace-nowrap px-4 py-3">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-5">
+      <div className="min-w-0 flex-1 basis-40">
+        <p className="truncate text-sm font-medium text-ink">{service.serviceName}</p>
+        <p className="truncate text-xs text-faint">
+          Cuenta {service.accountNumber}
+          {service.isAutoDebit && ' · Débito automático'}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2">
         {service.isAutoDebit ? (
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Monto debitado"
-              className={AMOUNT_INPUT_CLASSNAME}
-            />
-            <button
-              type="button"
-              onClick={() => persist('AUTO_DEBIT')}
-              className="text-xs font-medium text-accent hover:text-accent-strong"
-            >
-              Guardar
-            </button>
-          </div>
+          // Débito automático: no hay "pagar", solo registrar cuánto se debitó.
+          <>
+            {amountInput}
+            <Button size="sm" variant="outline" className="w-28" onClick={() => persist('AUTO_DEBIT')}>
+              {expense ? 'Actualizar' : 'Guardar'}
+            </Button>
+          </>
         ) : isEditing ? (
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            className={AMOUNT_INPUT_CLASSNAME}
-          />
+          <>
+            {amountInput}
+            <Button size="sm" variant="outline" className="w-28" onClick={() => persist('PAID')}>
+              Marcar pagado
+            </Button>
+          </>
         ) : (
-          <span className="text-sm font-medium text-ink">
-            {formatMoney({ amount: Number(amount) || 0, currency: 'ARS' })}
-          </span>
-        )}
-      </td>
-      <td className="whitespace-nowrap px-4 py-3 text-right">
-        {service.isAutoDebit ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-            <Lock className="h-3 w-3" />
-            Débito Automático
-          </span>
-        ) : isEditing ? (
-          <button
-            type="button"
-            onClick={() => persist('PAID')}
-            className="rounded-lg bg-accent px-3 py-1 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
-          >
-            Marcar como Pagado
-          </button>
-        ) : (
-          <div className="flex items-center justify-end gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-positive/10 px-2 py-0.5 text-xs font-medium text-positive">
-              <Check className="h-3 w-3" />
+          <>
+            <span className="text-sm font-medium tabular-nums text-ink">
+              {formatMoney({ amount: Number(amount) || 0, currency: 'ARS' })}
+            </span>
+            <span className="flex items-center gap-1 text-xs font-medium text-positive">
+              <Check className="h-3.5 w-3.5" />
               Pagado
             </span>
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              aria-label="Editar monto"
-              className="rounded-lg p-1 text-faint transition-colors hover:bg-line hover:text-ink-soft"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          </>
         )}
-      </td>
-    </tr>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`Más acciones para ${service.serviceName}`}
+            className="rounded-lg p-1.5 text-faint outline-none transition-colors hover:bg-line hover:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {isPaid && !isEditing && (
+              <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                <Pencil className="h-4 w-4" />
+                Corregir monto
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={onEditService}>
+              <Pencil className="h-4 w-4" />
+              Editar servicio
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={onDeleteService}>
+              <Trash2 className="h-4 w-4" />
+              Eliminar servicio
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </li>
   )
 }

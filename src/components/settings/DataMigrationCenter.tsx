@@ -97,8 +97,8 @@ export function DataMigrationCenter() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h3 className="text-lg font-semibold text-ink">Centro de Migración de Datos</h3>
-        <p className="text-sm text-muted">Exportá tu historial de gastos o importá gastos desde un archivo CSV.</p>
+        <h3 className="text-sm font-medium text-ink">Centro de Migración de Datos</h3>
+        <p className="text-xs text-muted">Exportá tu historial de gastos o importá gastos desde un archivo CSV.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -161,7 +161,7 @@ export function DataMigrationCenter() {
               <p className="text-xs text-muted-foreground">
                 Columnas: Fecha, Descripcion, Categoria, Monto, Moneda, Tipo (FIJO/FLEXIBLE).
               </p>
-              {isImporting && <p className="text-xs font-medium text-primary">Procesando archivo...</p>}
+              {isImporting && <p className="text-xs font-medium text-accent-text">Procesando archivo...</p>}
               <input
                 ref={fileInputRef}
                 type="file"

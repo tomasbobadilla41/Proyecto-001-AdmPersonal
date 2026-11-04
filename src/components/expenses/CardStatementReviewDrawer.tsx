@@ -183,7 +183,7 @@ export function CardStatementReviewDrawer({ isOpen, onClose, onConfirm, parsed, 
                 type="checkbox"
                 checked={row.included}
                 onChange={(e) => updateRow(row.key, { included: e.target.checked })}
-                className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                className="h-4 w-4 rounded border-line-strong bg-app text-accent-text focus:ring-accent"
                 aria-label="Incluir este consumo"
               />
 

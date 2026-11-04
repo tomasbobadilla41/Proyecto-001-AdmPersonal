@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Loader2, X } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import type { Expense, ServiceConfig } from '../../types/finance'
 import type { Currency } from '../../types/money'
 import { todayISODate } from '../../utils/finance'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 
 interface RegisterPaymentModalProps {
   /** Servicio para el que se registra el pago de este mes, o `null` si está cerrado. */
@@ -36,11 +37,10 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
     }
   }, [service, prefillAmount])
 
-  if (!service) return null
-  const currentService = service
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (!service) return
+    const currentService = service
     const montoNumerico = Number(monto)
     // `isSubmitting` corta un segundo submit mientras el primero sigue en
     // vuelo (ej: doble click, o Enter repetido por la red lenta) — sin esto
@@ -67,19 +67,14 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 rounded-xl border border-line bg-panel p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-ink">Registrar pago · {service.title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-lg p-1 text-muted hover:bg-line hover:text-ink"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    // Dialog de shadcn (antes un overlay hecho a mano): suma cierre con Escape,
+    // foco atrapado dentro del modal y la animación del resto de los diálogos.
+    <Dialog open={service !== null} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Registrar pago</DialogTitle>
+          <DialogDescription>{service?.title}</DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm text-ink-soft">
@@ -119,7 +114,7 @@ export function RegisterPaymentModal({ service, onClose, onSubmit, prefillAmount
             Confirmar pago
           </button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

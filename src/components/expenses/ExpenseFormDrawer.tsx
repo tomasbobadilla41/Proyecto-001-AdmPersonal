@@ -252,7 +252,7 @@ export function ExpenseFormDrawer({
                   onGoToPayments()
                   onClose()
                 }}
-                className="inline-flex items-center gap-1 self-start text-sm font-semibold text-accent hover:underline"
+                className="inline-flex items-center gap-1 self-start text-sm font-semibold text-accent-text hover:underline"
               >
                 Ir al Centro de Pagos
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -267,7 +267,7 @@ export function ExpenseFormDrawer({
                   type="checkbox"
                   checked={isInstallment}
                   onChange={(e) => handleInstallmentToggle(e.target.checked)}
-                  className="h-4 w-4 rounded border-line-strong bg-app text-accent focus:ring-accent"
+                  className="h-4 w-4 rounded border-line-strong bg-app text-accent-text focus:ring-accent"
                 />
                 Es compra en Cuotas
               </label>

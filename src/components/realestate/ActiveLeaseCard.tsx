@@ -1,6 +1,14 @@
 import { useState } from 'react'
-import { AlertTriangle, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import type { LeaseContract } from '../../types/realEstate'
+import { Button } from '../ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 import { formatMoney } from '../../utils/currency'
 import { getContractProgress, isIncreaseMonth } from '../../utils/leaseContract'
 import { RentUpdateCalculator } from './RentUpdateCalculator'
@@ -21,6 +29,12 @@ const INDEX_LABELS: Record<LeaseContract['indexType'], string> = {
   FIJO: 'Fijo (sin índice)',
 }
 
+/** Formatea 'YYYY-MM-DD' como 'MM/YYYY' sin pasar por Date (evita corrimientos de zona horaria). */
+function formatMonthYear(isoDate: string): string {
+  const [year, month] = isoDate.split('-')
+  return `${month}/${year}`
+}
+
 export function ActiveLeaseCard({
   contract,
   month,
@@ -34,21 +48,16 @@ export function ActiveLeaseCard({
 
   if (!contract) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-xl border border-line bg-panel p-5">
-        <h3 className="flex items-center gap-2 text-sm font-medium text-muted">
-          <FileText className="h-4 w-4" />
-          Contrato Activo
-        </h3>
-        <p className="text-sm text-faint">No hay un contrato vigente para este período.</p>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-strong"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Crear Contrato
-        </button>
-      </div>
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-line-strong bg-panel px-5 py-4">
+        <div>
+          <h3 className="text-sm font-medium text-ink">Sin contrato vigente</h3>
+          <p className="text-xs text-faint">No hay un contrato que cubra este mes.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={onCreate}>
+          <Plus />
+          Crear contrato
+        </Button>
+      </section>
     )
   }
 
@@ -56,77 +65,76 @@ export function ActiveLeaseCard({
   const showsBanner = isIncreaseMonth(contract, month, year)
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-5">
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-medium text-muted">
-          <FileText className="h-4 w-4" />
-          Contrato Activo
-        </h3>
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={() => onEdit(contract)}
-            aria-label="Editar contrato"
-            className="rounded-lg p-1.5 text-faint transition-colors hover:bg-line hover:text-ink-soft"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(contract)}
-            aria-label="Eliminar contrato"
-            className="rounded-lg p-1.5 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+    <section className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-muted">Contrato vigente</p>
+          <p className="truncate text-lg font-semibold text-ink">{contract.tenantName}</p>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Acciones del contrato"
+            className="rounded-lg p-1.5 text-faint outline-none transition-colors hover:bg-line hover:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => onEdit(contract)}>
+              <Pencil className="h-4 w-4" />
+              Editar contrato
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => onDelete(contract)}>
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
         <div>
-          <p className="text-xs text-faint">Inquilino</p>
-          <p className="truncate text-sm font-medium text-ink">{contract.tenantName}</p>
-        </div>
-        <div>
-          <p className="text-xs text-faint">Precio actual</p>
-          <p className="text-sm font-medium text-positive">
+          <dt className="text-xs text-faint">Alquiler actual</dt>
+          <dd className="font-medium tabular-nums text-ink">
             {formatMoney({ amount: contract.currentRentAmount, currency: 'ARS' })}
-          </p>
+          </dd>
         </div>
         <div>
-          <p className="text-xs text-faint">Índice</p>
-          <p className="text-sm font-medium text-ink">{INDEX_LABELS[contract.indexType]}</p>
+          <dt className="text-xs text-faint">Actualización</dt>
+          <dd className="font-medium text-ink">
+            {INDEX_LABELS[contract.indexType]}
+            {contract.indexType !== 'FIJO' && ` · cada ${contract.updateFrequencyMonths} meses`}
+          </dd>
         </div>
-      </div>
+        <div>
+          <dt className="text-xs text-faint">Vigencia</dt>
+          <dd className="font-medium tabular-nums text-ink">
+            {formatMonthYear(contract.startDate)} – {formatMonthYear(contract.endDate)}
+          </dd>
+        </div>
+      </dl>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-xs text-faint">
-          <span>Progreso del contrato</span>
-          <span>
+          <span>Progreso</span>
+          <span className="tabular-nums">
             Mes {progress.elapsedMonths} de {progress.totalMonths}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-line">
-          <div
-            className="h-full rounded-full bg-accent transition-all"
-            style={{ width: `${progress.percentage}%` }}
-          />
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+          <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${progress.percentage}%` }} />
         </div>
       </div>
 
       {showsBanner && (
-        <div className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-warning">
-            <AlertTriangle className="h-4 w-4" />
-            Corresponde actualización por {INDEX_LABELS[contract.indexType]}
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsCalculatorOpen(true)}
-            className="self-start rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-warning/90"
-          >
-            Calcular Nuevo Monto
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+          <p className="flex items-center gap-2 text-sm font-medium text-warning">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            Este mes corresponde actualizar por {INDEX_LABELS[contract.indexType]}
+          </p>
+          <Button size="sm" variant="outline" onClick={() => setIsCalculatorOpen(true)}>
+            Calcular nuevo monto
+          </Button>
         </div>
       )}
 
@@ -138,6 +146,6 @@ export function ActiveLeaseCard({
         initialBaseIndexValue={contract.baseIndexValue}
         onApply={onSaveRentUpdate}
       />
-    </div>
+    </section>
   )
 }

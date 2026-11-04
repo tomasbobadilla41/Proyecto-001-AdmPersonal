@@ -189,7 +189,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
             type="button"
             onClick={() => !isReadingPdf && fileInputRef.current?.click()}
             disabled={isReadingPdf}
-            className="inline-flex items-center gap-1.5 self-start text-xs font-medium text-accent hover:underline disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 self-start text-xs font-medium text-accent-text hover:underline disabled:opacity-50"
           >
             {isReadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
             {isReadingPdf ? 'Leyendo recibo…' : 'o subí tu recibo (PDF)'}
@@ -211,7 +211,7 @@ export function SalaryCard({ mes, anio, income, tipoCambio, onSave }: SalaryCard
                 type="button"
                 onClick={handleRegisterGymPayment}
                 disabled={isRegisteringGymPayment}
-                className="self-start text-xs font-semibold text-accent hover:underline disabled:opacity-50"
+                className="self-start text-xs font-semibold text-accent-text hover:underline disabled:opacity-50"
               >
                 {isRegisteringGymPayment ? 'Registrando…' : 'Registrar pago en el Centro de Pagos'}
               </button>

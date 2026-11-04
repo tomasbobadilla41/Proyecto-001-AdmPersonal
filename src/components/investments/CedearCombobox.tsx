@@ -16,7 +16,9 @@ export function CedearCombobox({ value, onChange }: CedearComboboxProps) {
   const selected = CEDEAR_LISTINGS.find((c) => c.ticker === value)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // `modal`: este buscador vive dentro de un Dialog — sin esto, el bloqueo de
+    // scroll del Dialog impide scrollear la lista del popover con la rueda.
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           type="button"

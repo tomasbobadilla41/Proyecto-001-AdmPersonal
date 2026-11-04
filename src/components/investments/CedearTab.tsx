@@ -1,22 +1,30 @@
-import { useState, type FormEvent } from 'react'
-import { Trash2 } from 'lucide-react'
+import { useMemo, useState, type FormEvent } from 'react'
+import { Plus } from 'lucide-react'
+import type { PortfolioHolding } from '../../types/finance'
 import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { CedearCombobox } from './CedearCombobox'
-import { TableSkeletonRows } from '../common/TableSkeletonRows'
+import { PositionList } from './PositionList'
+import { SummaryMetrics } from '../common/SummaryMetrics'
+import { FloatingActionButton } from '../common/FloatingActionButton'
+import { ConfirmDialog } from '../common/ConfirmDialog'
 import { usePortfolioStore } from '../../hooks/usePortfolioStore'
 import { formatMoney } from '../../utils/currency'
-import { aggregateHoldingsByTicker, calculateQuantity, formatQuantity } from '../../utils/portfolio'
+import { formatDateAR } from '../../utils/finance'
+import { aggregateHoldingsByTicker, calculateQuantity } from '../../utils/portfolio'
 
 export function CedearTab() {
   const { holdings, isLoading, addHolding, removeHolding } = usePortfolioStore()
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [ticker, setTicker] = useState('')
   const [quantity, setQuantity] = useState('')
   const [purchasePrice, setPurchasePrice] = useState('')
+  const [purchaseToDelete, setPurchaseToDelete] = useState<PortfolioHolding | null>(null)
 
-  const positions = aggregateHoldingsByTicker(holdings, 'cedear')
+  const positions = useMemo(() => aggregateHoldingsByTicker(holdings, 'cedear'), [holdings])
+  const totalInvested = positions.reduce((sum, p) => sum + p.totalInvested, 0)
 
   const quantityNumber = Number(quantity) || 0
   const priceNumber = Number(purchasePrice) || 0
@@ -41,113 +49,120 @@ export function CedearTab() {
       setTicker('')
       setQuantity('')
       setPurchasePrice('')
+      setIsFormOpen(false)
     }
   }
 
-  function handleDeletePosition(tickerToRemove: string) {
-    if (!window.confirm(`¿Eliminar todas las compras de "${tickerToRemove}"?`)) return
-    holdings
-      .filter((h) => h.assetType === 'cedear' && h.ticker === tickerToRemove)
-      .forEach((h) => void removeHolding(h.id))
-  }
-
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Registrar compra de CEDEAR</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-3">
-            <div className="flex flex-col gap-1.5 sm:col-span-3">
-              <Label>Buscador de CEDEAR</Label>
+    <div className="flex flex-col gap-4">
+      {positions.length > 0 && (
+        <SummaryMetrics
+          metrics={[
+            { label: 'Invertido', value: formatMoney({ amount: totalInvested, currency: 'ARS' }) },
+            {
+              label: 'Posiciones',
+              value: positions.length,
+              // Sin cotización en vivo de BYMA: por eso no hay valor actual ni rendimiento acá.
+              caption: 'Sin cotización en vivo',
+            },
+          ]}
+        />
+      )}
+
+      <PositionList
+        positions={positions}
+        isLoading={isLoading}
+        emptyMessage="Todavía no registraste ninguna compra de CEDEARs."
+        onDeletePurchase={setPurchaseToDelete}
+        renderValue={(position) => (
+          <>
+            <p className="text-sm font-medium tabular-nums text-ink">
+              {formatMoney({ amount: position.totalInvested, currency: position.currency })}
+            </p>
+            <p className="text-xs text-faint">invertido</p>
+          </>
+        )}
+      />
+
+      <FloatingActionButton icon={Plus} label="Registrar compra" onClick={() => setIsFormOpen(true)} />
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar compra de CEDEAR</DialogTitle>
+            <DialogDescription>Precio en pesos, como opera en BYMA.</DialogDescription>
+          </DialogHeader>
+          <form id="cedear-purchase-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label>CEDEAR</Label>
               <CedearCombobox value={ticker} onChange={setTicker} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="cedear-quantity">Cantidad nominal</Label>
-              <Input
-                id="cedear-quantity"
-                type="number"
-                min="0"
-                step="any"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="0"
-                required
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="cedear-quantity">Cantidad</Label>
+                <Input
+                  id="cedear-quantity"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="0"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="cedear-price">Precio por CEDEAR</Label>
+                <Input
+                  id="cedear-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="cedear-price">Precio de compra por CEDEAR</Label>
-              <Input
-                id="cedear-price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={purchasePrice}
-                onChange={(e) => setPurchasePrice(e.target.value)}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Total invertido</Label>
-              <p className="flex h-8 items-center text-sm font-semibold text-ink">
+            <p className="flex items-baseline justify-between rounded-lg bg-line/50 px-3 py-2 text-sm">
+              <span className="text-muted">Total invertido</span>
+              <span className="font-semibold tabular-nums text-ink">
                 {formatMoney({ amount: previewTotal, currency: 'ARS' })}
-              </p>
-            </div>
-
-            <div className="sm:col-span-3 flex justify-end">
-              <Button type="submit">Registrar compra</Button>
-            </div>
+              </span>
+            </p>
           </form>
-        </CardContent>
-      </Card>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsFormOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="cedear-purchase-form" disabled={!ticker}>
+              Registrar compra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <div className="overflow-x-auto rounded-xl border border-line bg-panel">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-panel/70 text-muted">
-            <tr>
-              <th className="px-4 py-3 font-medium">Ticker</th>
-              <th className="px-4 py-3 text-right font-medium">Cantidad</th>
-              <th className="px-4 py-3 text-right font-medium">PPC</th>
-              <th className="px-4 py-3 text-right font-medium">Total Invertido</th>
-              <th className="px-4 py-3 text-right font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {isLoading && <TableSkeletonRows columns={5} rows={4} />}
-            {!isLoading && positions.map((position) => (
-              <tr key={position.ticker} className="text-ink-soft">
-                <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">{position.ticker}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-right">{formatQuantity(position.quantity)}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-right">
-                  {formatMoney({ amount: position.averagePurchasePrice, currency: position.currency })}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right">
-                  {formatMoney({ amount: position.totalInvested, currency: position.currency })}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    onClick={() => handleDeletePosition(position.ticker)}
-                    aria-label="Eliminar posición"
-                    className="rounded-lg p-1.5 text-faint transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!isLoading && positions.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-faint">
-                  Todavía no registraste ninguna compra de CEDEARs.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ConfirmDialog
+        open={purchaseToDelete !== null}
+        title="¿Eliminar esta compra?"
+        description={
+          purchaseToDelete && (
+            <>
+              Compra de <span className="font-medium text-ink-soft">{purchaseToDelete.ticker}</span> por{' '}
+              {formatMoney({ amount: purchaseToDelete.amountInvested, currency: purchaseToDelete.currency })} del{' '}
+              {formatDateAR(new Date(purchaseToDelete.date))}. El resto de la posición no se toca.
+            </>
+          )
+        }
+        confirmLabel="Eliminar"
+        destructive
+        onCancel={() => setPurchaseToDelete(null)}
+        onConfirm={() => {
+          if (purchaseToDelete) void removeHolding(purchaseToDelete.id)
+          setPurchaseToDelete(null)
+        }}
+      />
     </div>
   )
 }

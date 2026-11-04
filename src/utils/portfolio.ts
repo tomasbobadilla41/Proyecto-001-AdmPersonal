@@ -36,6 +36,8 @@ export interface AggregatedPosition {
   averagePurchasePrice: number
   totalInvested: number
   currency: Currency
+  /** Compras individuales que forman la posición, de la más nueva a la más vieja. */
+  purchases: PortfolioHolding[]
 }
 
 /**
@@ -47,25 +49,35 @@ export function aggregateHoldingsByTicker(
   holdings: PortfolioHolding[],
   assetType: PortfolioHolding['assetType'],
 ): AggregatedPosition[] {
-  const byTicker = new Map<string, { quantity: number; totalInvested: number; currency: Currency }>()
+  const byTicker = new Map<
+    string,
+    { quantity: number; totalInvested: number; currency: Currency; purchases: PortfolioHolding[] }
+  >()
 
   for (const holding of holdings) {
     if (holding.assetType !== assetType) continue
-    const prev = byTicker.get(holding.ticker) ?? { quantity: 0, totalInvested: 0, currency: holding.currency }
+    const prev = byTicker.get(holding.ticker) ?? {
+      quantity: 0,
+      totalInvested: 0,
+      currency: holding.currency,
+      purchases: [],
+    }
     byTicker.set(holding.ticker, {
       quantity: prev.quantity + holding.quantity,
       totalInvested: prev.totalInvested + holding.amountInvested,
       currency: holding.currency,
+      purchases: [...prev.purchases, holding],
     })
   }
 
   return Array.from(byTicker.entries())
-    .map(([ticker, { quantity, totalInvested, currency }]) => ({
+    .map(([ticker, { quantity, totalInvested, currency, purchases }]) => ({
       ticker,
       quantity,
       averagePurchasePrice: quantity > 0 ? totalInvested / quantity : 0,
       totalInvested,
       currency,
+      purchases: purchases.sort((a, b) => b.date.localeCompare(a.date)),
     }))
     .sort((a, b) => a.ticker.localeCompare(b.ticker))
 }

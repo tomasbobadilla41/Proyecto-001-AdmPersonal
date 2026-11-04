@@ -58,13 +58,19 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) {
+  function goHome() {
+    onTabChange('dashboard')
+    // Si ya estás en el Resumen, al menos vuelve arriba de todo.
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const isMoreActive = [...MOBILE_MORE_ITEMS, SETTINGS_NAV_ITEM].some((item) => item.key === activeTab)
 
   return (
     <div className="flex min-h-screen flex-col bg-app text-ink md:flex-row">
       {/* Menú lateral (desktop): navegación arriba, configuración y usuario al pie */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-nav px-3 py-5 md:flex">
-        <Brand />
+        <Brand onClick={goHome} />
 
         <nav className="mt-6 flex flex-col gap-0.5">
           {PERSONAL_NAV_ITEMS.map((item) => (
@@ -92,12 +98,12 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Encabezado mobile: solo marca + usuario. La navegación va abajo, al alcance del pulgar. */}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-nav/90 px-4 py-2.5 backdrop-blur md:hidden">
-          <Brand />
+          <Brand onClick={goHome} />
           <UserNav />
         </header>
 
-        {/* pb extra en mobile para que la barra inferior no tape el final del contenido */}
-        <main className="min-w-0 flex-1 p-4 pb-24 sm:p-6 sm:pb-24 md:pb-6 lg:p-8">{children}</main>
+        {/* pb extra en mobile: la barra inferior (~56px) + el botón flotante encima (~44px) no pueden tapar el final del contenido */}
+        <main className="min-w-0 flex-1 p-4 pb-36 sm:p-6 sm:pb-36 md:pb-6 lg:p-8">{children}</main>
       </div>
 
       {/* Barra inferior (mobile) */}
@@ -108,7 +114,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
         <DropdownMenu>
           <DropdownMenuTrigger
             className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium outline-none transition-colors ${
-              isMoreActive ? 'text-accent' : 'text-muted'
+              isMoreActive ? 'text-accent-text' : 'text-muted'
             }`}
           >
             <MoreHorizontal className="h-5 w-5" />
@@ -119,7 +125,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
               <DropdownMenuItem
                 key={key}
                 onClick={() => onTabChange(key)}
-                className={activeTab === key ? 'text-accent' : undefined}
+                className={activeTab === key ? 'text-accent-text' : undefined}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -128,7 +134,7 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onTabChange(SETTINGS_NAV_ITEM.key)}
-              className={activeTab === SETTINGS_NAV_ITEM.key ? 'text-accent' : undefined}
+              className={activeTab === SETTINGS_NAV_ITEM.key ? 'text-accent-text' : undefined}
             >
               <Settings className="h-4 w-4" />
               {SETTINGS_NAV_ITEM.label}
@@ -140,14 +146,20 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
   )
 }
 
-function Brand() {
+/** Logo de la app: como en la mayoría de los sitios, lleva al inicio (Resumen). */
+function Brand({ onClick }: { onClick: () => void }) {
   return (
-    <div className="flex items-center gap-2 px-2 text-base font-semibold tracking-tight">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Adm Personal — ir al Resumen"
+      className="flex items-center gap-2 self-start rounded-lg px-2 text-base font-semibold tracking-tight text-ink transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-on-accent">
         <Wallet className="h-4 w-4" />
       </span>
       Adm Personal
-    </div>
+    </button>
   )
 }
 
@@ -169,7 +181,7 @@ function SidebarButton({ item, active, onClick }: NavButtonProps) {
         active ? 'bg-line font-medium text-ink' : 'text-muted hover:bg-line/60 hover:text-ink'
       }`}
     >
-      <Icon className={`h-4 w-4 ${active ? 'text-accent' : ''}`} />
+      <Icon className={`h-4 w-4 ${active ? 'text-accent-text' : ''}`} />
       {label}
     </button>
   )
@@ -184,7 +196,7 @@ function BottomBarButton({ item, active, onClick }: NavButtonProps) {
       onClick={() => onClick(key)}
       aria-current={active ? 'page' : undefined}
       className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors ${
-        active ? 'text-accent' : 'text-muted'
+        active ? 'text-accent-text' : 'text-muted'
       }`}
     >
       <Icon className="h-5 w-5" />

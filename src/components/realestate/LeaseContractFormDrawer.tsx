@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
 import type { LeaseContract, RentIndexType } from '../../types/realEstate'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 
 interface LeaseContractFormDrawerProps {
   isOpen: boolean
@@ -55,7 +55,6 @@ export function LeaseContractFormDrawer({
     }
   }, [isOpen, initialContract])
 
-  if (!isOpen) return null
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -84,21 +83,11 @@ export function LeaseContractFormDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-      <div className="flex h-full w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-line bg-panel p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-ink">
-            {isEditMode ? 'Editar contrato' : 'Crear contrato'}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-lg p-1 text-muted hover:bg-line hover:text-ink"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEditMode ? 'Editar contrato' : 'Crear contrato'}</DialogTitle>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm text-ink-soft">
@@ -212,7 +201,7 @@ export function LeaseContractFormDrawer({
             {isEditMode ? 'Guardar cambios' : 'Guardar contrato'}
           </button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
