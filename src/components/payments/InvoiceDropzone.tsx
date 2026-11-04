@@ -84,28 +84,40 @@ export function InvoiceDropzone({ services, onMatch, onNoMatch }: InvoiceDropzon
       }}
       onDragLeave={() => setIsDraggingOver(false)}
       onDrop={handleDrop}
-      className={`mx-auto flex w-full max-w-3xl cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
-        isDraggingOver ? 'border-accent bg-accent/5' : 'border-line hover:border-line-strong'
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !isProcessing) {
+          e.preventDefault()
+          fileInputRef.current?.click()
+        }
+      }}
+      aria-label="Subir factura en PDF para registrar un pago"
+      // Barra de una línea (antes un recuadro grande): subir facturas es
+      // ocasional y no debería ser lo primero que se ve de la pantalla.
+      className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+        isDraggingOver ? 'border-accent bg-accent/5' : 'border-line-strong hover:border-accent/60 hover:bg-line/30'
       }`}
     >
       <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileInputChange} />
 
       {isProcessing ? (
-        <>
-          <Loader2 className="h-6 w-6 animate-spin text-accent" />
-          <p className="text-sm font-medium text-ink-soft">IA analizando factura…</p>
-        </>
+        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" />
+      ) : isDraggingOver ? (
+        <FileText className="h-4 w-4 shrink-0 text-accent" />
       ) : (
-        <>
-          {isDraggingOver ? (
-            <FileText className="h-6 w-6 text-accent" />
-          ) : (
-            <Sparkles className="h-6 w-6 text-faint" />
-          )}
-          <p className="text-sm font-medium text-ink-soft">Arrastrá tu factura en PDF acá para extraer los datos con IA</p>
-          <p className="text-xs text-faint">o hacé clic para elegir un archivo</p>
-        </>
+        <Sparkles className="h-4 w-4 shrink-0 text-accent" />
       )}
+      <p className="text-sm text-ink-soft">
+        {isProcessing ? (
+          'Analizando factura con IA…'
+        ) : (
+          <>
+            <span className="font-medium text-ink">Arrastrá una factura PDF</span>
+            <span className="text-muted"> o hacé clic — detectamos el servicio y el monto.</span>
+          </>
+        )}
+      </p>
     </div>
   )
 }

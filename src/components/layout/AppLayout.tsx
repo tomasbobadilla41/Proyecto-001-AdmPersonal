@@ -96,8 +96,8 @@ export function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) 
           <UserNav />
         </header>
 
-        {/* pb extra en mobile para que la barra inferior no tape el final del contenido */}
-        <main className="min-w-0 flex-1 p-4 pb-24 sm:p-6 sm:pb-24 md:pb-6 lg:p-8">{children}</main>
+        {/* pb extra en mobile: la barra inferior (~56px) + el botón flotante encima (~44px) no pueden tapar el final del contenido */}
+        <main className="min-w-0 flex-1 p-4 pb-36 sm:p-6 sm:pb-36 md:pb-6 lg:p-8">{children}</main>
       </div>
 
       {/* Barra inferior (mobile) */}
