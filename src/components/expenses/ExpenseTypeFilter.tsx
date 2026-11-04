@@ -7,7 +7,7 @@ interface ExpenseTypeFilterProps {
   onChange: (value: ExpenseTypeFilterValue) => void
 }
 
-/** Mismos colores que `ExpenseTypeBadge`, para que el filtro activo se lea igual que el badge de cada fila. */
+/** Mismos colores que el tipo de cada fila en `ExpenseList` (text-fijos / text-flexibles). */
 const OPTIONS: { value: ExpenseTypeFilterValue; label: string; activeClassName: string }[] = [
   { value: 'TODOS', label: 'Todos', activeClassName: 'bg-line text-ink' },
   { value: 'FIJO', label: 'Fijo', activeClassName: 'bg-fijos/10 text-fijos' },

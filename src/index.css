@@ -126,6 +126,9 @@ body {
   --color-primary-foreground: var(--color-on-accent);
   --color-secondary: var(--color-line);
   --color-secondary-foreground: var(--color-ink-soft);
+  /* OJO: shadcn usa `bg-muted` como FONDO, pero acá `muted` es un color de
+     TEXTO (gris apagado). Al agregar componentes con `npx shadcn add`,
+     reemplazar `bg-muted` por `bg-line` (fondo sutil) o quedan fondos gris claro. */
   --color-muted-foreground: var(--color-muted);
   --color-accent-foreground: var(--color-on-accent);
   --color-border: var(--color-line);

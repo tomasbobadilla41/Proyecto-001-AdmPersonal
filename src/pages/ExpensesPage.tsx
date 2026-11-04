@@ -1,24 +1,28 @@
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
-import { CreditCard, Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { ChevronDown, CreditCard, FileText, Loader2, Plus, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { isFixedExpenseCategory, type Expense, type ExpenseCategory, type ExpenseType } from '../types/finance'
-import { CategoryBadge } from '../components/expenses/CategoryBadge'
-import { ExpenseTypeBadge } from '../components/expenses/ExpenseTypeBadge'
 import { ExpenseTypeFilter, type ExpenseTypeFilterValue } from '../components/expenses/ExpenseTypeFilter'
-import { MonthYearSelector } from '../components/expenses/MonthYearSelector'
-import { ExpensesByTypeChart } from '../components/expenses/ExpensesByTypeChart'
+import { ExpenseMonthSummary } from '../components/expenses/ExpenseMonthSummary'
+import { ExpenseList } from '../components/expenses/ExpenseList'
+import { DeleteExpenseDialog } from '../components/expenses/DeleteExpenseDialog'
+import { MonthNavigator } from '../components/common/MonthNavigator'
 import { ExpenseFormDrawer } from '../components/expenses/ExpenseFormDrawer'
 import { CardStatementReviewDrawer } from '../components/expenses/CardStatementReviewDrawer'
 import { FloatingActionButton } from '../components/common/FloatingActionButton'
-import { TableSkeletonRows } from '../components/common/TableSkeletonRows'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu'
 import { useExchangeRateStore } from '../hooks/useExchangeRateStore'
 import { useExpenseStore } from '../hooks/useExpenseStore'
 import { parseInvoicePdf } from '../services/parseInvoiceApi'
 import { parseCardStatement, type ParsedCardStatement } from '../utils/cardStatementParser'
 import { extractPdfText } from '../utils/pdfText'
 import { MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
-import { formatMoney } from '../utils/currency'
-import { formatDateAR, getAvailableYears, getExchangeRate } from '../utils/finance'
+import { getExchangeRate } from '../utils/finance'
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 type InvoicePrefill = { expenseType: ExpenseType; category?: ExpenseCategory; monto?: number }
@@ -53,11 +57,11 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   const [mes, setMes] = useState(() => new Date().getMonth() + 1)
   const [anio, setAnio] = useState(() => new Date().getFullYear())
   const [tipoFiltro, setTipoFiltro] = useState<ExpenseTypeFilterValue>('TODOS')
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
 
-  const years = useMemo(() => getAvailableYears(expenses), [expenses])
   const tipoCambio = getExchangeRate(exchangeRates, mes, anio)
 
-  // Sin el filtro de Tipo — el gráfico de Fijos vs Flexibles necesita los dos
+  // Sin el filtro de Tipo — el resumen Fijos vs Flexibles necesita los dos
   // tipos siempre presentes para comparar; si le pasáramos `filteredExpenses`
   // ya filtrado por tipo, se mostraría 100%/0% en vez de la comparación real.
   const monthExpenses = useMemo(
@@ -73,11 +77,17 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
     [monthExpenses, tipoFiltro],
   )
 
-  function handleDelete(expense: Expense) {
-    if (window.confirm(`¿Eliminar el gasto "${expense.descripcion}"?`)) {
-      void removeExpense(expense.id)
-    }
+  function handleConfirmDelete(expense: Expense) {
+    void removeExpense(expense.id)
+    setExpenseToDelete(null)
   }
+
+  function handleMonthChange(nextMes: number, nextAnio: number) {
+    setMes(nextMes)
+    setAnio(nextAnio)
+  }
+
+  const isImporting = isReadingInvoice || isReadingCardStatement
 
   function handleSubmit(expenses: Expense[]) {
     if (formState?.mode === 'edit') {
@@ -153,124 +163,60 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-ink">Gastos</h2>
-          <p className="text-sm text-muted">Detalle de gastos por mes, como en la planilla</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            ref={invoiceInputRef}
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={handleInvoiceFileChange}
-          />
-          <button
-            type="button"
-            onClick={() => !isReadingInvoice && invoiceInputRef.current?.click()}
-            disabled={isReadingInvoice}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-line disabled:opacity-50"
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">Gastos</h2>
+
+        {/* Las dos importaciones de PDF en un solo botón: son acciones ocasionales,
+            no merecen dos botones grandes en el encabezado. */}
+        <input ref={invoiceInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleInvoiceFileChange} />
+        <input
+          ref={cardStatementInputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={handleCardStatementFileChange}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            disabled={isImporting}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-2 text-sm font-medium text-ink-soft outline-none transition-colors hover:bg-line focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50"
           >
-            {isReadingInvoice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {isReadingInvoice ? 'Leyendo factura…' : 'Subir factura (PDF)'}
-          </button>
-          <input
-            ref={cardStatementInputRef}
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={handleCardStatementFileChange}
-          />
-          <button
-            type="button"
-            onClick={() => !isReadingCardStatement && cardStatementInputRef.current?.click()}
-            disabled={isReadingCardStatement}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-line disabled:opacity-50"
-          >
-            {isReadingCardStatement ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-            {isReadingCardStatement ? 'Leyendo resumen…' : 'Subir resumen de tarjeta (PDF)'}
-          </button>
-          <MonthYearSelector mes={mes} anio={anio} years={years} onMesChange={setMes} onAnioChange={setAnio} />
-          <ExpenseTypeFilter value={tipoFiltro} onChange={setTipoFiltro} />
-        </div>
+            {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {isReadingInvoice ? 'Leyendo factura…' : isReadingCardStatement ? 'Leyendo resumen…' : 'Importar'}
+            {!isImporting && <ChevronDown className="h-3.5 w-3.5 text-faint" />}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuItem onClick={() => invoiceInputRef.current?.click()}>
+              <FileText className="h-4 w-4" />
+              Factura de servicio (PDF)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => cardStatementInputRef.current?.click()}>
+              <CreditCard className="h-4 w-4" />
+              Resumen de tarjeta (PDF)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="overflow-x-auto rounded-xl border border-line bg-panel xl:col-span-2">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-panel/70 text-muted">
-              <tr>
-                <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Tipo</th>
-                <th className="px-4 py-3 font-medium">Categoría</th>
-                <th className="px-4 py-3 font-medium">Descripción</th>
-                <th className="px-4 py-3 text-right font-medium">Monto</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {isLoading && <TableSkeletonRows columns={6} rows={5} />}
-              {!isLoading && filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="text-ink-soft">
-                  <td className="whitespace-nowrap px-4 py-3 text-muted">
-                    {formatDateAR(expense.fecha)}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <ExpenseTypeBadge expenseType={expense.expenseType} />
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <CategoryBadge category={expense.category} />
-                      {expense.subcategoria && (
-                        <span className="text-xs text-faint">{expense.subcategoria}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="max-w-[260px] truncate px-4 py-3" title={expense.descripcion}>
-                    {expense.descripcion}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right font-medium">
-                    {formatMoney({ amount: expense.monto, currency: expense.moneda })}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <div className="flex justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormState({ mode: 'edit', expense })}
-                        aria-label="Editar gasto"
-                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-line hover:text-ink-soft"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(expense)}
-                        aria-label="Eliminar gasto"
-                        className="rounded-lg p-1.5 text-faint transition-colors hover:bg-negative/10 hover:text-negative"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!isLoading && filteredExpenses.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-faint">
-                    {tipoFiltro === 'TODOS'
-                      ? 'No hay gastos cargados para este período.'
-                      : `No hay gastos ${tipoFiltro === 'FIJO' ? 'fijos' : 'flexibles'} cargados para este período.`}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <ExpensesByTypeChart expenses={monthExpenses} tipoCambio={tipoCambio} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MonthNavigator mes={mes} anio={anio} onChange={handleMonthChange} />
+        <ExpenseTypeFilter value={tipoFiltro} onChange={setTipoFiltro} />
       </div>
+
+      <ExpenseMonthSummary expenses={monthExpenses} tipoCambio={tipoCambio} />
+
+      <ExpenseList
+        expenses={filteredExpenses}
+        isLoading={isLoading}
+        emptyMessage={
+          tipoFiltro === 'TODOS'
+            ? 'No hay gastos cargados para este mes.'
+            : `No hay gastos ${tipoFiltro === 'FIJO' ? 'fijos' : 'flexibles'} cargados para este mes.`
+        }
+        onEdit={(expense) => setFormState({ mode: 'edit', expense })}
+        onDelete={setExpenseToDelete}
+      />
 
       <FloatingActionButton icon={Plus} label="Cargar gasto" onClick={() => setFormState({ mode: 'create' })} />
       <ExpenseFormDrawer
@@ -287,6 +233,11 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
         onConfirm={handleCardStatementConfirm}
         parsed={cardStatementData}
         existingExpenses={expenses}
+      />
+      <DeleteExpenseDialog
+        expense={expenseToDelete}
+        onCancel={() => setExpenseToDelete(null)}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   )
