@@ -23,6 +23,7 @@ import { parseCardStatement, type ParsedCardStatement } from '../utils/cardState
 import { extractPdfText } from '../utils/pdfText'
 import { MAX_PDF_SIZE_BYTES } from '../utils/pdfFile'
 import { getExchangeRate } from '../utils/finance'
+import { compareExpensesByCategoryThenDate } from '../utils/expenseOrder'
 
 type ExpenseFormState = { mode: 'create' } | { mode: 'edit'; expense: Expense } | null
 type InvoicePrefill = { expenseType: ExpenseType; category?: ExpenseCategory; monto?: number }
@@ -73,7 +74,7 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
     () =>
       monthExpenses
         .filter((e) => tipoFiltro === 'TODOS' || e.expenseType === tipoFiltro)
-        .sort((a, b) => b.fecha.getTime() - a.fecha.getTime()),
+        .sort(compareExpensesByCategoryThenDate),
     [monthExpenses, tipoFiltro],
   )
 
