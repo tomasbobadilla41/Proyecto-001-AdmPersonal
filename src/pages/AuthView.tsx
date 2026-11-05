@@ -1,5 +1,5 @@
 import { useState, type ComponentProps, type FormEvent, type ReactNode } from 'react'
-import { ArrowLeft, Loader2, Mail, MailCheck, User } from 'lucide-react'
+import { ArrowLeft, Loader2, Mail, MailCheck, Ticket, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
 import { Label } from '../components/ui/label'
@@ -12,7 +12,7 @@ type AuthMode = 'login' | 'signup' | 'reset' | 'check-email'
 
 const COPY: Record<AuthMode, { title: string; description: string }> = {
   login: { title: 'Bienvenido de nuevo', description: 'Ingresá a tu cuenta para ver tus finanzas.' },
-  signup: { title: 'Creá tu cuenta', description: 'Empezá a ordenar tus gastos e ingresos en minutos.' },
+  signup: { title: 'Creá tu cuenta', description: 'El acceso es solo por invitación: usá el código que te compartieron.' },
   reset: {
     title: 'Recuperar contraseña',
     description: 'Ingresá tu correo y te enviamos un enlace para restablecerla.',
@@ -28,6 +28,7 @@ const COPY: Record<AuthMode, { title: string; description: string }> = {
 export function AuthView() {
   const [mode, setMode] = useState<AuthMode>('login')
   const [fullName, setFullName] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -43,6 +44,10 @@ export function AuthView() {
     event.preventDefault()
 
     if (mode === 'signup') {
+      if (!inviteCode.trim()) {
+        toast.error('Necesitás un código de invitación para crear una cuenta.')
+        return
+      }
       if (password.length < MIN_PASSWORD_LENGTH) {
         toast.error(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`)
         return
@@ -63,7 +68,8 @@ export function AuthView() {
           email,
           password,
           options: {
-            data: { full_name: fullName.trim() },
+            // El código lo valida el Auth Hook `hook_before_user_created` (migración 016).
+            data: { full_name: fullName.trim(), invite_code: inviteCode.trim().toUpperCase() },
             emailRedirectTo: window.location.origin,
           },
         })
@@ -171,6 +177,23 @@ export function AuthView() {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {mode === 'signup' && (
+          <Field id="invite-code" label="Código de invitación">
+            <IconInput
+              icon={<Ticket className="h-4 w-4" />}
+              id="invite-code"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              required
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="XXXX-XXXX"
+              className="font-mono tracking-wider uppercase"
+            />
+          </Field>
+        )}
+
         {mode === 'signup' && (
           <Field id="full-name" label="Nombre">
             <IconInput

@@ -37,6 +37,11 @@ async function parseWithGemini(file: File): Promise<GeminiInvoiceData> {
   })
 
   if (error || !data) {
+    // 403: el usuario no tiene el permiso invoice_ai (lo habilita un admin en Configuración).
+    const status = (error as { context?: Response } | null)?.context?.status
+    if (status === 403) {
+      throw new Error('No tenés habilitada la lectura de facturas con IA. Pedile acceso al administrador.')
+    }
     throw new Error('Error al leer factura con la IA.')
   }
 

@@ -5,6 +5,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isServiceRoleRequest, requirePermission } from "../_shared/permissions.ts";
 
 // Trae los gastos que el usuario hizo con Mercado Pago (como comprador, no
 // como vendedor) usando la API de Reportes de cuenta ("Todas las
@@ -12,6 +13,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // saldo. La dispara un cron de Postgres (pg_cron + pg_net, ver migración
 // 014) cada 20 minutos — no un usuario ni un navegador, por eso
 // verify_jwt=true y se autentica con el service_role key (ver config.toml).
+// Además de ese JWT, solo acepta a un usuario con el permiso mp_sync
+// (migración 016): cualquier otro JWT válido (anon key, otros usuarios) se
+// rechaza, porque esta función opera con el token de MP del dueño.
 //
 // ⚠️ IMPORTANTE — sin validar contra datos reales todavía: al momento de
 // escribir esto, la cuenta de Mercado Pago conectada estaba bloqueada por su
@@ -143,6 +147,13 @@ export default {
   async fetch(req: Request): Promise<Response> {
     if (req.method !== "POST") {
       return errorResponse("Método no permitido.", 405);
+    }
+
+    if (!isServiceRoleRequest(req)) {
+      const auth = await requirePermission(req, "mp_sync");
+      if (!auth.ok) {
+        return errorResponse(auth.message, auth.status);
+      }
     }
 
     const mpAccessToken = Deno.env.get("MP_ACCESS_TOKEN");

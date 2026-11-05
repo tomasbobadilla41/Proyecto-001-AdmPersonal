@@ -1,7 +1,11 @@
 import { ApplePayRequestLog } from '../components/settings/ApplePayRequestLog'
 import { DataMigrationCenter } from '../components/settings/DataMigrationCenter'
+import { UsersAdminPanel } from '../components/settings/UsersAdminPanel'
+import { useCurrentProfile } from '../hooks/useCurrentProfile'
 
 export function SettingsPage() {
+  const { isAdmin } = useCurrentProfile()
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <div>
@@ -12,6 +16,9 @@ export function SettingsPage() {
       <DataMigrationCenter />
 
       <ApplePayRequestLog />
+
+      {/* Solo admins: la autorización real la hace RLS, esto solo oculta la sección. */}
+      {isAdmin && <UsersAdminPanel />}
     </div>
   )
 }
