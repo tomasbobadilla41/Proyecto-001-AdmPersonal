@@ -28,7 +28,7 @@ export const EXPENSE_CATEGORIES = {
     'Gimnasio',
     'Streaming (Netflix, YT)',
   ],
-  FLEXIBLE: ['Supermercado', 'Cenas/Salidas', 'Compras', 'Nafta', 'Tarjeta de Crédito', 'Otros'],
+  FLEXIBLE: ['Supermercado', 'Cenas/Salidas', 'Compras', 'Nafta', 'Vacaciones', 'Tarjeta de Crédito', 'Otros'],
 } as const satisfies Record<ExpenseType, readonly string[]>
 
 export type FixedExpenseCategory = (typeof EXPENSE_CATEGORIES.FIJO)[number]
@@ -71,6 +71,12 @@ export interface Expense {
    * de cuota).
    */
   cardImportRef?: string
+  /**
+   * Si este gasto se generó desde la solapa Vacaciones, el `id` del
+   * `TripExpense` que lo originó. Esos gastos se regeneran desde el viaje
+   * cada vez que se edita el gasto del viaje — no se editan desde Gastos.
+   */
+  tripExpenseId?: string
 }
 
 export interface Income {

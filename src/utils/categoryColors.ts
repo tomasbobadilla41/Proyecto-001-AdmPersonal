@@ -25,6 +25,7 @@ export const CATEGORY_COLORS: Record<ExpenseCategory, CategoryColor> = {
   'Cenas/Salidas': { chartColor: '#e879f9' },
   Compras: { chartColor: '#c084fc' },
   Nafta: { chartColor: '#fbbf24' },
+  Vacaciones: { chartColor: '#34d399' },
   'Tarjeta de Crédito': { chartColor: '#4ade80' },
   Otros: { chartColor: '#a1a1aa' },
 }

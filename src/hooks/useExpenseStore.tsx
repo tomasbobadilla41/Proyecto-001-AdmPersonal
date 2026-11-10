@@ -2,7 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { toast } from 'sonner'
 import type { Expense } from '../types/finance'
 import { useAuth } from './useAuth'
-import { deleteExpenseRow, fetchExpenses, insertExpenses, updateExpenseRow } from '../services/expensesApi'
+import {
+  deleteExpenseRow,
+  fetchExpenses,
+  insertExpenses,
+  replaceTripLinkedExpenses,
+  updateExpenseRow,
+} from '../services/expensesApi'
 import { useRemoveAction, useUpdateAction } from './storeHelpers'
 
 interface ExpenseStore {
@@ -19,6 +25,17 @@ interface ExpenseStore {
   /** Reemplaza un gasto existente (mismo `id`). */
   updateExpense: (expense: Expense) => Promise<boolean>
   removeExpense: (id: string) => Promise<boolean>
+  /**
+   * Reemplaza los gastos generados por un gasto de viaje (solapa
+   * Vacaciones) por `expenses` — vacío para solo borrarlos.
+   */
+  replaceTripLinkedExpenses: (tripExpenseId: string, expenses: Expense[]) => Promise<boolean>
+  /**
+   * Saca del estado local los gastos vinculados a esos gastos de viaje, sin
+   * pegarle a Supabase: para cuando Postgres ya los borró en cascada (ej: al
+   * eliminar un viaje entero).
+   */
+  forgetTripLinkedExpenses: (tripExpenseIds: string[]) => void
 }
 
 const ExpenseStoreContext = createContext<ExpenseStore | null>(null)
@@ -82,9 +99,39 @@ export function ExpenseStoreProvider({ children }: { children: ReactNode }) {
   const updateExpense = useUpdateAction(setExpenses, userId, updateExpenseRow, 'No se pudo actualizar el gasto.')
   const removeExpense = useRemoveAction(setExpenses, deleteExpenseRow, 'No se pudo eliminar el gasto.')
 
+  const replaceLinked = useCallback(
+    async (tripExpenseId: string, linkedExpenses: Expense[]) => {
+      if (!userId) return false
+      try {
+        const inserted = await replaceTripLinkedExpenses(tripExpenseId, linkedExpenses, userId)
+        setExpenses((prev) => [...inserted, ...prev.filter((e) => e.tripExpenseId !== tripExpenseId)])
+        return true
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'No se pudieron actualizar los gastos del mes vinculados al viaje.',
+        )
+        return false
+      }
+    },
+    [userId],
+  )
+
+  const forgetTripLinkedExpenses = useCallback((tripExpenseIds: string[]) => {
+    const ids = new Set(tripExpenseIds)
+    setExpenses((prev) => prev.filter((e) => !e.tripExpenseId || !ids.has(e.tripExpenseId)))
+  }, [])
+
   const value = useMemo<ExpenseStore>(
-    () => ({ expenses, isLoading, addExpenses, updateExpense, removeExpense }),
-    [expenses, isLoading, addExpenses, updateExpense, removeExpense],
+    () => ({
+      expenses,
+      isLoading,
+      addExpenses,
+      updateExpense,
+      removeExpense,
+      replaceTripLinkedExpenses: replaceLinked,
+      forgetTripLinkedExpenses,
+    }),
+    [expenses, isLoading, addExpenses, updateExpense, removeExpense, replaceLinked, forgetTripLinkedExpenses],
   )
 
   return <ExpenseStoreContext.Provider value={value}>{children}</ExpenseStoreContext.Provider>
