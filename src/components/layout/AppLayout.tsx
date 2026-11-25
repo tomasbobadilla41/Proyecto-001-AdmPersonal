@@ -4,6 +4,7 @@ import {
   CreditCard,
   LayoutDashboard,
   MoreHorizontal,
+  Plane,
   Receipt,
   Repeat,
   Settings,
@@ -36,6 +37,7 @@ const PERSONAL_NAV_ITEMS: NavItem[] = [
   { key: 'pagos', label: 'Centro de Pagos', shortLabel: 'Pagos', icon: CreditCard },
   { key: 'suscripciones', label: 'Suscripciones', icon: Repeat },
   { key: 'inversiones', label: 'Inversiones', icon: TrendingUp },
+  { key: 'vacaciones', label: 'Vacaciones', icon: Plane },
 ]
 
 /** Propiedades en alquiler — a propósito separado de las finanzas personales. */

@@ -7,6 +7,7 @@ import { PaymentsHubPage } from './pages/PaymentsHubPage'
 import { SubscriptionsPage } from './pages/SubscriptionsPage'
 import { RealEstateDashboardView } from './pages/RealEstateDashboardView'
 import { SettingsPage } from './pages/SettingsPage'
+import { TripsPage } from './pages/TripsPage'
 import { AuthView } from './pages/AuthView'
 import { UpdatePasswordView } from './pages/UpdatePasswordView'
 import { StreamingServicesStoreProvider } from './hooks/useStreamingServicesStore'
@@ -16,6 +17,7 @@ import { ExchangeRateStoreProvider } from './hooks/useExchangeRateStore'
 import { ServicesStoreProvider } from './hooks/useServicesStore'
 import { RealEstateStoreProvider } from './hooks/useRealEstateStore'
 import { PortfolioStoreProvider } from './hooks/usePortfolioStore'
+import { TripStoreProvider } from './hooks/useTripStore'
 import { ThemeProvider } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { Toaster } from './components/ui/sonner'
@@ -41,15 +43,23 @@ function AuthGate() {
             <ServicesStoreProvider>
               <RealEstateStoreProvider>
                 <PortfolioStoreProvider>
-                  <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
-                    {activeTab === 'dashboard' && <DashboardPage />}
-                    {activeTab === 'gastos' && <ExpensesPage onGoToPayments={() => setActiveTab('pagos')} />}
-                    {activeTab === 'inversiones' && <InvestmentsPage />}
-                    {activeTab === 'pagos' && <PaymentsHubPage />}
-                    {activeTab === 'suscripciones' && <SubscriptionsPage />}
-                    {activeTab === 'inmuebles' && <RealEstateDashboardView />}
-                    {activeTab === 'config' && <SettingsPage />}
-                  </AppLayout>
+                  <TripStoreProvider>
+                    <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
+                      {activeTab === 'dashboard' && <DashboardPage />}
+                      {activeTab === 'gastos' && (
+                        <ExpensesPage
+                          onGoToPayments={() => setActiveTab('pagos')}
+                          onGoToTrips={() => setActiveTab('vacaciones')}
+                        />
+                      )}
+                      {activeTab === 'inversiones' && <InvestmentsPage />}
+                      {activeTab === 'pagos' && <PaymentsHubPage />}
+                      {activeTab === 'suscripciones' && <SubscriptionsPage />}
+                      {activeTab === 'vacaciones' && <TripsPage />}
+                      {activeTab === 'inmuebles' && <RealEstateDashboardView />}
+                      {activeTab === 'config' && <SettingsPage />}
+                    </AppLayout>
+                  </TripStoreProvider>
                 </PortfolioStoreProvider>
               </RealEstateStoreProvider>
             </ServicesStoreProvider>

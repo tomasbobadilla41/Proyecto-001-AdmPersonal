@@ -31,9 +31,11 @@ type InvoicePrefill = { expenseType: ExpenseType; category?: ExpenseCategory; mo
 interface ExpensesPageProps {
   /** Lleva al Centro de Pagos — usado por el aviso de "gasto fijo que se repite" dentro del formulario de carga. */
   onGoToPayments: () => void
+  /** Lleva a la solapa Vacaciones — para editar un gasto que se generó desde un viaje. */
+  onGoToTrips: () => void
 }
 
-export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
+export function ExpensesPage({ onGoToPayments, onGoToTrips }: ExpensesPageProps) {
   const { exchangeRates } = useExchangeRateStore()
   const { expenses, isLoading, addExpenses, updateExpense, removeExpense } = useExpenseStore()
   const [formState, setFormState] = useState<ExpenseFormState>(null)
@@ -77,6 +79,14 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
         .sort(compareExpensesByCategoryThenDate),
     [monthExpenses, tipoFiltro],
   )
+
+  // Los gastos generados desde un viaje se regeneran desde allá: editarlos
+  // acá los desincronizaría del gasto del viaje.
+  function warnTripLinked() {
+    toast.info('Este gasto viene de Vacaciones: editalo o eliminalo desde el viaje.', {
+      action: { label: 'Ir a Vacaciones', onClick: onGoToTrips },
+    })
+  }
 
   function handleConfirmDelete(expense: Expense) {
     void removeExpense(expense.id)
@@ -215,8 +225,8 @@ export function ExpensesPage({ onGoToPayments }: ExpensesPageProps) {
             ? 'No hay gastos cargados para este mes.'
             : `No hay gastos ${tipoFiltro === 'FIJO' ? 'fijos' : 'flexibles'} cargados para este mes.`
         }
-        onEdit={(expense) => setFormState({ mode: 'edit', expense })}
-        onDelete={setExpenseToDelete}
+        onEdit={(expense) => (expense.tripExpenseId ? warnTripLinked() : setFormState({ mode: 'edit', expense }))}
+        onDelete={(expense) => (expense.tripExpenseId ? warnTripLinked() : setExpenseToDelete(expense))}
       />
 
       <FloatingActionButton icon={Plus} label="Cargar gasto" onClick={() => setFormState({ mode: 'create' })} />

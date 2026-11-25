@@ -16,6 +16,7 @@ interface ExpenseRow {
   recurring_group_id: string | null
   service_id: string | null
   card_import_ref: string | null
+  trip_expense_id: string | null
 }
 
 function rowToExpense(row: ExpenseRow): Expense {
@@ -31,6 +32,7 @@ function rowToExpense(row: ExpenseRow): Expense {
     recurringGroupId: row.recurring_group_id ?? undefined,
     serviceId: row.service_id ?? undefined,
     cardImportRef: row.card_import_ref ?? undefined,
+    tripExpenseId: row.trip_expense_id ?? undefined,
   }
 }
 
@@ -48,6 +50,7 @@ function expenseToInsertRow(expense: Expense, userId: string) {
     recurring_group_id: expense.recurringGroupId ?? null,
     service_id: expense.serviceId ?? null,
     card_import_ref: expense.cardImportRef ?? null,
+    trip_expense_id: expense.tripExpenseId ?? null,
   }
 }
 
@@ -89,4 +92,20 @@ export async function updateExpenseRow(expense: Expense, userId: string): Promis
 export async function deleteExpenseRow(id: string): Promise<void> {
   const { error } = await supabase.from('expenses').delete().eq('id', id)
   if (error) throw error
+}
+
+/**
+ * Reemplaza todos los gastos generados por un gasto de viaje: borra los
+ * vinculados a `tripExpenseId` e inserta `expenses` (que puede venir vacío,
+ * ej: si el gasto del viaje pasó a PENDIENTE o lo pagó la pareja).
+ */
+export async function replaceTripLinkedExpenses(
+  tripExpenseId: string,
+  expenses: Expense[],
+  userId: string,
+): Promise<Expense[]> {
+  const { error } = await supabase.from('expenses').delete().eq('trip_expense_id', tripExpenseId)
+  if (error) throw error
+  if (expenses.length === 0) return []
+  return insertExpenses(expenses, userId)
 }
