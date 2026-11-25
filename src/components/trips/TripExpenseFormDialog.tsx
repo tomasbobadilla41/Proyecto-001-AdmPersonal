@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Loader2 } from 'lucide-react'
 import type { Currency } from '../../types/money'
 import {
   TRIP_EXPENSE_CATEGORIES,
@@ -17,7 +18,8 @@ interface TripExpenseFormDialogProps {
   isOpen: boolean
   trip: Trip
   onClose: () => void
-  onSubmit: (expense: TripExpense) => void
+  /** Devuelve una promesa: el diálogo bloquea el botón hasta que termina el guardado. */
+  onSubmit: (expense: TripExpense) => Promise<unknown>
   /** Si se pasa, edita ese gasto; si no, carga uno nuevo. */
   initialExpense?: TripExpense
 }
@@ -44,9 +46,14 @@ export function TripExpenseFormDialog({ isOpen, trip, onClose, onSubmit, initial
   const [paidBy, setPaidBy] = useState<TripPaidBy>('YO')
   const [installments, setInstallments] = useState('1')
   const [notes, setNotes] = useState('')
+  // El ref corta un segundo Enter antes de que React re-renderice; el estado maneja la UI.
+  const submittingRef = useRef(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
+    submittingRef.current = false
+    setIsSubmitting(false)
     setCategory(initialExpense?.category ?? 'Vuelo')
     setDescription(initialExpense?.description ?? '')
     setAmount(initialExpense ? String(initialExpense.amount) : '')
@@ -73,24 +80,32 @@ export function TripExpenseFormDialog({ isOpen, trip, onClose, onSubmit, initial
           ? `Se carga en Gastos (Vacaciones) en ${installmentsNumber} cuotas de ${formatMoney({ amount: outOfPocket / installmentsNumber, currency })}, desde el mes siguiente.`
           : `Se carga en Gastos (Vacaciones) por ${formatMoney({ amount: outOfPocket, currency })}.`
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!(amountNumber > 0) || !paymentDate) return
+    if (submittingRef.current || !(amountNumber > 0) || !paymentDate) return
 
-    onSubmit({
-      id: initialExpense?.id ?? `trip-exp-${Date.now()}`,
-      tripId: trip.id,
-      category,
-      description: description.trim() || category,
-      amount: amountNumber,
-      currency,
-      paymentDate,
-      status,
-      paidBy,
-      // Si lo pagó la pareja, no se generan cuotas propias en Gastos.
-      installments: paidBy === 'PAREJA' ? 1 : installmentsNumber,
-      notes: notes.trim() || undefined,
-    })
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      await onSubmit({
+        id: initialExpense?.id ?? `trip-exp-${Date.now()}`,
+        tripId: trip.id,
+        category,
+        description: description.trim() || category,
+        amount: amountNumber,
+        currency,
+        paymentDate,
+        status,
+        paidBy,
+        // Si lo pagó la pareja, no se generan cuotas propias en Gastos.
+        installments: paidBy === 'PAREJA' ? 1 : installmentsNumber,
+        notes: notes.trim() || undefined,
+      })
+    } finally {
+      // Si falló, el diálogo sigue abierto y se puede reintentar.
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -212,9 +227,11 @@ export function TripExpenseFormDialog({ isOpen, trip, onClose, onSubmit, initial
 
           <button
             type="submit"
-            className="mt-1 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
+            disabled={isSubmitting}
+            className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong disabled:opacity-50"
           >
-            {isEditMode ? 'Guardar cambios' : 'Guardar gasto'}
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Guardando…' : isEditMode ? 'Guardar cambios' : 'Guardar gasto'}
           </button>
         </form>
       </DialogContent>

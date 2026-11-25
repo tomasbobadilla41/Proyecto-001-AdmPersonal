@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Loader2 } from 'lucide-react'
 import type { Currency } from '../../types/money'
 import type { Trip } from '../../types/trips'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -6,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 interface TripFormDialogProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (trip: Trip) => void
+  /** Devuelve una promesa: el diálogo bloquea el botón hasta que termina el guardado. */
+  onSubmit: (trip: Trip) => Promise<unknown>
   /** Si se pasa, el formulario edita ese viaje; si no, crea uno nuevo. */
   initialTrip?: Trip
 }
@@ -24,9 +26,14 @@ export function TripFormDialog({ isOpen, onClose, onSubmit, initialTrip }: TripF
   const [partnerName, setPartnerName] = useState('')
   const [budgetAmount, setBudgetAmount] = useState('')
   const [budgetCurrency, setBudgetCurrency] = useState<Currency>('ARS')
+  // El ref corta un segundo Enter antes de que React re-renderice; el estado maneja la UI.
+  const submittingRef = useRef(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
+    submittingRef.current = false
+    setIsSubmitting(false)
     setName(initialTrip?.name ?? '')
     setDestination(initialTrip?.destination ?? '')
     setStartDate(initialTrip?.startDate ?? '')
@@ -38,22 +45,31 @@ export function TripFormDialog({ isOpen, onClose, onSubmit, initialTrip }: TripF
 
   const datesInvalid = Boolean(startDate && endDate && endDate < startDate)
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (submittingRef.current) return
     if (!name.trim() || !destination.trim() || !startDate || !endDate || datesInvalid) return
 
     const budgetNumber = Number(budgetAmount)
 
     // No llama a `onClose` acá: el padre cierra cuando termina el guardado async.
-    onSubmit({
-      id: initialTrip?.id ?? `trip-${Date.now()}`,
-      name: name.trim(),
-      destination: destination.trim(),
-      startDate,
-      endDate,
-      partnerName: partnerName.trim() || undefined,
-      budget: budgetNumber > 0 ? { amount: budgetNumber, currency: budgetCurrency } : undefined,
-    })
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      await onSubmit({
+        id: initialTrip?.id ?? `trip-${Date.now()}`,
+        name: name.trim(),
+        destination: destination.trim(),
+        startDate,
+        endDate,
+        partnerName: partnerName.trim() || undefined,
+        budget: budgetNumber > 0 ? { amount: budgetNumber, currency: budgetCurrency } : undefined,
+      })
+    } finally {
+      // Si falló, el diálogo sigue abierto y se puede reintentar.
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -150,10 +166,11 @@ export function TripFormDialog({ isOpen, onClose, onSubmit, initialTrip }: TripF
 
           <button
             type="submit"
-            disabled={datesInvalid}
-            className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong disabled:opacity-50"
+            disabled={datesInvalid || isSubmitting}
+            className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong disabled:opacity-50"
           >
-            {isEditMode ? 'Guardar cambios' : 'Crear viaje'}
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Guardando…' : isEditMode ? 'Guardar cambios' : 'Crear viaje'}
           </button>
         </form>
       </DialogContent>
